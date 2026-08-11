@@ -1,4 +1,4 @@
-import  { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import MainLayout from '@/layouts/MainLayout'
 import ItemController from '@/modules/item/item.controller'
 import { ITEM_TYPE, validateItem } from '@/modules/item/item.dto'
@@ -96,6 +96,22 @@ export function Items() {
         [name]: name === 'percentual' ? parseFloat(value) || '' : value,
       },
     }))
+  }
+
+  const handleDayToggle = (dayIndex) => {
+    setFormData(prev => {
+      const diasSemana = prev.discount.diasSemana || []
+      const newDias = diasSemana.includes(dayIndex)
+        ? diasSemana.filter(d => d !== dayIndex)
+        : [...diasSemana, dayIndex]
+      return {
+        ...prev,
+        discount: {
+          ...prev.discount,
+          diasSemana: newDias,
+        },
+      }
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -323,6 +339,32 @@ export function Items() {
                   />
                 </div>
               </div>
+
+              {formData.discount.percentual > 0 && (
+                <div className="form-group">
+                  <label>Dias com desconto (deixe em branco para todos os dias)</label>
+                  <div className="days-selector">
+                    {[
+                      { index: 1, nome: 'segunda' },
+                      { index: 2, nome: 'terça' },
+                      { index: 3, nome: 'quarta' },
+                      { index: 4, nome: 'quinta' },
+                      { index: 5, nome: 'sexta' },
+                      { index: 6, nome: 'sábado' },
+                      { index: 0, nome: 'domingo' },
+                    ].map(({ index, nome }) => (
+                      <label key={index} className="day-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={formData.discount.diasSemana?.includes(index) || false}
+                          onChange={() => handleDayToggle(index)}
+                        />
+                        <span>{nome.charAt(0).toUpperCase() + nome.slice(1)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="form-actions">
                 <button type="submit" className="btn-primary" disabled={ItemController.loading}>

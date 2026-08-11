@@ -161,6 +161,13 @@
   font-weight: 600;
 }
 
+.price-original {
+  color: #A9A3AE;
+  font-size: 12px;
+  text-decoration: line-through;
+  margin-bottom: 2px;
+}
+
 .price-value {
   color: #6A0DAD;
   font-size: 20px;
@@ -183,19 +190,28 @@
   letter-spacing: 0.5px;
 }
 
+/* Discount Info */
+.item-discount-info {
+  padding: 12px;
+  background: rgba(255, 107, 107, 0.05);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.discount-days {
+  color: #FF6B6B;
+  font-size: 11px;
+  font-weight: 600;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Stock Indicator */
 .item-stock-indicator {
   display: flex;
   justify-content: flex-start;
-}
-
-.out-of-stock,
-.low-stock,
-.in-stock {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 4px;
 }
 
 .out-of-stock {

@@ -4,6 +4,17 @@ import ItemController from '@/modules/item/item.controller'
 import { ITEM_TYPE } from '@/modules/item/item.dto'
 import './ItemsView.css'
 
+// Mapeamento de dias: 0=domingo, 1=segunda, 2=terça, 3=quarta, 4=quinta, 5=sexta, 6=sábado
+const DIAS_SEMANA = {
+  0: 'domingo',
+  1: 'segunda',
+  2: 'terça',
+  3: 'quarta',
+  4: 'quinta',
+  5: 'sexta',
+  6: 'sábado',
+}
+
 export function ItemsView() {
   const [activeTab, setActiveTab] = useState(ITEM_TYPE.PRODUCT)
   const [items, setItems] = useState([])
@@ -49,6 +60,24 @@ export function ItemsView() {
   const getTabLabel = () => (activeTab === ITEM_TYPE.PRODUCT ? 'Produtos' : 'Serviços')
   const getTabIcon = () => (activeTab === ITEM_TYPE.PRODUCT ? '📦' : '🔧')
 
+  // Calcular preço com desconto
+  const calculateDiscountedPrice = (item) => {
+    if (!item.discount?.percentual || item.discount.percentual === 0) {
+      return null
+    }
+    return item.price * (1 - item.discount.percentual / 100)
+  }
+
+  // Obter nomes dos dias com desconto
+  const getDiscountDays = (diasSemana) => {
+    if (!diasSemana || diasSemana.length === 0) {
+      return 'Todos os dias'
+    }
+    return diasSemana
+      .map(day => DIAS_SEMANA[day].charAt(0).toUpperCase() + DIAS_SEMANA[day].slice(1))
+      .join(', ')
+  }
+
   return (
     <MainLayout>
       <div className="items-view-container">
@@ -81,7 +110,9 @@ export function ItemsView() {
               <p>Nenhum {activeTab === ITEM_TYPE.PRODUCT ? 'produto' : 'serviço'} disponível no momento</p>
             </div>
           ) : (
-            items.map(item => (
+            items.map(item => {
+              const discountedPrice = calculateDiscountedPrice(item)
+              return (
               <div key={item.id} className="item-card">
                 <div className="item-card-header">
                   <h3 className="item-name">{item.name}</h3>
@@ -95,7 +126,14 @@ export function ItemsView() {
                 <div className="item-card-footer">
                   <div className="item-price">
                     <span className="price-label">Preço</span>
-                    <span className="price-value">R$ {item.price.toFixed(2).replace('.', ',')}</span>
+                    {discountedPrice ? (
+                      <>
+                        <span className="price-original">R$ {item.price.toFixed(2).replace('.', ',')}</span>
+                        <span className="price-value">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
+                      </>
+                    ) : (
+                      <span className="price-value">R$ {item.price.toFixed(2).replace('.', ',')}</span>
+                    )}
                   </div>
 
                   {item.discount?.percentual > 0 && (
@@ -104,6 +142,12 @@ export function ItemsView() {
                     </div>
                   )}
                 </div>
+
+                {item.discount?.percentual > 0 && (
+                  <div className="item-discount-info">
+                    <span className="discount-days">📅 {getDiscountDays(item.discount.diasSemana)}</span>
+                  </div>
+                )}
 
                 {activeTab === ITEM_TYPE.PRODUCT && (
                   <div className="item-stock-indicator">
@@ -117,7 +161,8 @@ export function ItemsView() {
                   </div>
                 )}
               </div>
-            ))
+            )
+            })
           )}
         </div>
 
