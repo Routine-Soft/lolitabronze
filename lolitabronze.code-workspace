@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "backend"
+		},
+		{
+			"path": "electron-app"
+		},
+		{
+			"path": "frontend"
+		}
+	],
+	"settings": {}
+}
