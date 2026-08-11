@@ -7,6 +7,6 @@ export async function itemRoutes(fastify) {
   fastify.post('/items', controller.create);
   fastify.get('/items', controller.list);
   fastify.get('/items/:id', controller.getById);
-  fastify.put('/items/:id', controller.update);
+  fastify.patch('/items/:id', controller.update);
   fastify.delete('/items/:id', controller.remove);
 }
