@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login/Login'
 import Home from '@/pages/Home/Home'
 import Items from '@/pages/Items/Items'
+import ItemsView from '@/pages/ItemsView/ItemsView'
 import './App.css'
 
 function App() {
@@ -30,6 +31,16 @@ function App() {
             element={
               <ProtectedRoute requiredRoles={['super_admin']}>
                 <Items />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida - ItemsView (visualizar itens) */}
+          <Route
+            path="/items-view"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <ItemsView />
               </ProtectedRoute>
             }
           />

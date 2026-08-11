@@ -26,6 +26,12 @@ export function Sidebar({ isOpen, onClose }) {
       roles: ['super_admin'],
     },
     {
+      label: 'Ver Produtos/Serviços',
+      icon: '👀',
+      path: '/items-view',
+      roles: ['recepcionista', 'super_admin'],
+    },
+    {
       label: 'Pedidos',
       icon: '📋',
       path: '/orders',
