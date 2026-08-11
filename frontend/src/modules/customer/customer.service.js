@@ -7,33 +7,34 @@ export const CustomerService = {
   async create(name, phone) {
     const dto = createCustomerDTO({ name, phone })
     const response = await apiService.post('/customers', dto)
-    return customerResponseDTO(response.data)
+    return customerResponseDTO(response.data || response)
   },
 
   // Listar clientes - Protegido
   async list(search = '') {
     const url = search ? `/customers?search=${encodeURIComponent(search)}` : '/customers'
     const response = await apiService.get(url)
-    return (response.data || []).map(customer => customerResponseDTO(customer))
+    const customers = Array.isArray(response) ? response : (response.data || [])
+    return customers.map(customer => customerResponseDTO(customer))
   },
 
   // Buscar cliente por ID - Protegido
   async getById(id) {
     const response = await apiService.get(`/customers/${id}`)
-    return customerResponseDTO(response.data)
+    return customerResponseDTO(response.data || response)
   },
 
   // Atualizar cliente - Protegido
   async update(id, name, phone) {
     const dto = updateCustomerDTO({ name, phone })
     const response = await apiService.patch(`/customers/${id}`, dto)
-    return customerResponseDTO(response.data)
+    return customerResponseDTO(response.data || response)
   },
 
   // Deletar cliente - Protegido
   async delete(id) {
     const response = await apiService.delete(`/customers/${id}`)
-    return response.data
+    return response.data || response
   },
 }
 

@@ -8,5 +8,6 @@ export function toCustomerResponseDto(customer) {
     id: customer._id,
     name: customer.name,
     phone: customer.phone,
+    createdAt: customer.createdAt,
   };
 }

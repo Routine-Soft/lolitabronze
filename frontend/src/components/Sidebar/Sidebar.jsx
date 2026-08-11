@@ -17,7 +17,7 @@ export function Sidebar({ isOpen, onClose }) {
       label: 'Clientes',
       icon: '👥',
       path: '/customers',
-      roles: ['recepcionista', 'super_admin'],
+      roles: ['super_admin'],
     },
     {
       label: 'Produtos e Serviços',

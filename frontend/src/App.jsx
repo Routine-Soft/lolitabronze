@@ -5,6 +5,7 @@ import Login from '@/pages/Login/Login'
 import Home from '@/pages/Home/Home'
 import Items from '@/pages/Items/Items'
 import ItemsView from '@/pages/ItemsView/ItemsView'
+import Customers from '@/pages/Customers/Customers'
 import './App.css'
 
 function App() {
@@ -41,6 +42,16 @@ function App() {
             element={
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
                 <ItemsView />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida - Customers (super_admin only) */}
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute requiredRoles={['super_admin']}>
+                <Customers />
               </ProtectedRoute>
             }
           />
