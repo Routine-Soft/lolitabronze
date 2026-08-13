@@ -1,0 +1,341 @@
+.salesreport-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.salesreport-header {
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #8414D1, #7010C0);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.salesreport-header h1 {
+  font-size: 1.8rem;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+/* ==============================
+   FILTRO DE PERÍODO
+================================ */
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 16px 18px;
+
+  background: #0a080f;
+  border: 1px solid rgba(132, 20, 209, 0.15);
+  border-radius: 12px;
+
+  box-sizing: border-box;
+}
+
+
+/* BOTÕES */
+
+.filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 42px;
+  min-width: 82px;
+  padding: 0 18px;
+
+  background: #f1f1f3;
+  color: #555;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: #ffffff;
+  color: #8414D1;
+  transform: translateY(-1px);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #8414D1, #7010C0);
+  color: #ffffff;
+
+  border-color: #8414D1;
+
+  box-shadow: 0 4px 12px rgba(132, 20, 209, 0.25);
+}
+
+
+/* SELECTS */
+
+.filter-selects {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-left: auto;
+}
+
+.filter-selects select {
+  height: 42px;
+  min-width: 135px;
+
+  padding: 0 38px 0 16px;
+
+  background-color: #ffffff;
+  color: #1b1720;
+
+  border: 1px solid #8414D1;
+  border-radius: 7px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.filter-selects select:hover {
+  border-color: #a83be8;
+  background: #faf7fc;
+}
+
+.filter-selects select:focus {
+  border-color: #8414D1;
+  box-shadow: 0 0 0 3px rgba(132, 20, 209, 0.12);
+}
+
+
+/* ==============================
+   RESPONSIVO
+================================ */
+
+@media (max-width: 768px) {
+
+  .filter-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .filter-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .filter-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .filter-selects {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .filter-selects select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .filter-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filter-selects {
+    grid-template-columns: 1fr;
+  }
+}
+
+.salesreport-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.report-card {
+  background: #FFF;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #E8E8E8;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #8414D1, #7010C0);
+  color: #FFF;
+  padding: 1rem;
+  border-bottom: 1px solid #7010C0;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.card-content {
+  padding: 0.75rem;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.card-content p {
+  text-align: center;
+  color: #999;
+  margin: 1rem 0;
+}
+
+.empty {
+  padding: 1rem;
+  text-align: center;
+  color: #CCC;
+}
+
+/* ===== TABELA ===== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.data-table thead {
+  background: #F0F0F0;
+  position: sticky;
+  top: 0;
+}
+
+.data-table th {
+  padding: 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: #05030A;
+  border-bottom: 2px solid #8414D1;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #E0E0E0;
+  color: #05030A;
+}
+
+.data-table tbody tr:hover {
+  background: #F8F8F8;
+}
+
+.ranking-col {
+  font-weight: 600;
+  color: #8414D1;
+  text-align: center;
+  width: 50px;
+}
+
+.nome-col {
+  font-weight: 500;
+}
+
+.telefone-col {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.total-col,
+.price-col {
+  font-weight: 600;
+  text-align: right;
+  color: #8414D1;
+}
+
+.payment-col,
+.qty-col {
+  text-align: center;
+  color: #666;
+}
+
+.tipo-col {
+  text-align: center;
+  color: #999;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .salesreport-container {
+    padding: 0.75rem;
+  }
+
+  .filter-section {
+    gap: 0.75rem;
+  }
+
+  .filter-buttons {
+    width: 100%;
+  }
+
+  .filter-btn {
+    flex: 1;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .filter-selects {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .filter-selects select {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.3rem 0.3rem;
+  }
+}
+

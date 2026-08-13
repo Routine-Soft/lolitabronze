@@ -2,10 +2,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login/Login'
-import Home from '@/pages/Home/Home'
+import Dashboard from '@/pages/Dashboard/Dashboard'
 import Items from '@/pages/Items/Items'
 import ItemsView from '@/pages/ItemsView/ItemsView'
 import Customers from '@/pages/Customers/Customers'
+import Orders from '@/pages/Orders/Orders'
+import ServiceScheduling from '@/pages/ServiceScheduling/ServiceScheduling'
+import CashReport from '@/pages/CashReport/CashReport'
+import SalesReport from '@/pages/SalesReport/SalesReport'
 import './App.css'
 
 function App() {
@@ -16,12 +20,12 @@ function App() {
           {/* Rota pública */}
           <Route path="/login" element={<Login />} />
 
-          {/* Rota protegida - Home */}
+          {/* Rota protegida - Dashboard */}
           <Route
             path="/home"
             element={
               <ProtectedRoute>
-                <Home />
+                <Dashboard />
               </ProtectedRoute>
             }
           />
@@ -52,6 +56,46 @@ function App() {
             element={
               <ProtectedRoute requiredRoles={['super_admin']}>
                 <Customers />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida - Orders (recepcionista, super_admin) */}
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida - Service Scheduling (recepcionista, super_admin) */}
+          <Route
+            path="/service-scheduling"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <ServiceScheduling />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida - Cash Report (recepcionista, super_admin) */}
+          <Route
+            path="/cash-report"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <CashReport />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida - Sales Report (recepcionista, super_admin) */}
+          <Route
+            path="/sales-report"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <SalesReport />
               </ProtectedRoute>
             }
           />

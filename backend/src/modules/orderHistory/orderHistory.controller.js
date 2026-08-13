@@ -22,3 +22,22 @@ export async function getById(request, reply) {
   if (!order) return reply.code(404).send({ message: 'Pedido não encontrado' });
   return reply.send(toOrderResponseDto(order));
 }
+
+export async function getSlotAvailability(request, reply) {
+  const { date } = request.query;
+  if (!date) {
+    return reply.code(400).send({ message: 'Parâmetro "date" é obrigatório (YYYY-MM-DD)' });
+  }
+
+  const availability = await orderService.getSlotAvailability(date);
+  return reply.send(availability);
+}
+
+export async function finalizarServico(request, reply) {
+  const { id } = request.params;
+  const userId = request.user.id; // do token
+  const { typePayment } = request.body;
+
+  const order = await orderService.finalizarServicoAgendado(id, userId, typePayment);
+  return reply.send(toOrderResponseDto(order));
+}

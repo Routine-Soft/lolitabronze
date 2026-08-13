@@ -93,3 +93,20 @@ export async function getSessionSummary(sessionId) {
   const resumo = await calcularResumo(sessionId);
   return { sessao, resumo };
 }
+
+export async function listMovements() {
+  try {
+    const movements = await CashMovementModel.find()
+      .populate('cashSessionId')
+      .populate('orderHistoryId')
+      .populate('userId')
+      .sort({ createdAt: -1 })
+      .exec();
+    
+    return movements || [];
+  } catch (error) {
+    console.error('Erro ao listar movimentos:', error);
+    // Se falhar com populate, retornar sem populate
+    return CashMovementModel.find().sort({ createdAt: -1 });
+  }
+}

@@ -7,6 +7,7 @@ export const MOVEMENT_TYPE = {
 export const MOVEMENT_CATEGORY = {
   VENDA: 'VENDA',
   SINAL: 'SINAL',
+  COMPLEMENTO: 'COMPLEMENTO', // restante do serviço pago no dia da finalização
   DESPESA: 'DESPESA',
   SANGRIA: 'SANGRIA',   // retirada de dinheiro do caixa
   REFORCO: 'REFORCO',   // entrada de dinheiro extra no caixa

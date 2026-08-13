@@ -13,7 +13,12 @@ export const UserService = {
   async login(email, password) {
     const dto = loginUserDTO({ email, password })
     const response = await apiService.post('/users/login', dto)
-    return response.data
+    // Formatar usuário com DTO para incluir ID
+    return {
+      user: userResponseDTO(response.data.user),
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+    }
   },
 
   // Criar usuário - Público

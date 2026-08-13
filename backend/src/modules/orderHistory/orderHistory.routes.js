@@ -7,4 +7,6 @@ export async function orderHistoryRoutes(fastify) {
   fastify.post('/orders', controller.create);
   fastify.get('/orders', controller.list);
   fastify.get('/orders/:id', controller.getById);
+  fastify.get('/orders-availability', controller.getSlotAvailability);
+  fastify.patch('/orders/:id/finalizar', controller.finalizarServico);
 }

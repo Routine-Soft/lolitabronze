@@ -7,6 +7,7 @@ export const MOVEMENT_TYPE = {
 export const MOVEMENT_CATEGORY = {
   VENDA: 'VENDA',
   SINAL: 'SINAL',
+  COMPLEMENTO: 'COMPLEMENTO', // restante do serviço pago no dia da finalização
   DESPESA: 'DESPESA',
   SANGRIA: 'SANGRIA', // retirada de dinheiro do caixa
   REFORCO: 'REFORCO', // entrada de dinheiro extra no caixa
@@ -31,6 +32,7 @@ export const createMovementDTO = (data) => ({
   categoria: data.categoria || MOVEMENT_CATEGORY.OUTRO,
   valor: parseFloat(data.valor) || 0,
   descricao: data.descricao || '',
+  typePayment: data.typePayment ?? null,
   orderHistoryId: data.orderHistoryId || null,
   userId: data.userId, // userID
 })
@@ -56,6 +58,7 @@ export const movementResponseDTO = (data) => ({
   categoria: data.categoria,
   valor: data.valor,
   descricao: data.descricao,
+  typePayment: data.typePayment,
   cashSessionId: data.cashSessionId,
   orderHistoryId: data.orderHistoryId,
   userId: data.userId,

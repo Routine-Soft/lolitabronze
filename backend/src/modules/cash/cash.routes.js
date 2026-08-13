@@ -8,4 +8,5 @@ export async function cashRoutes(fastify) {
   fastify.post('/cash/:id/close', controller.close);
   fastify.post('/cash/movement', controller.addMovement);
   fastify.get('/cash/current', controller.getCurrent);
+  fastify.get('/cash/movements', controller.listMovements);
 }

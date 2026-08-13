@@ -13,6 +13,7 @@ export function toCreateMovementDto(body, userId) {
     categoria: body.categoria,
     valor: body.valor,
     descricao: body.descricao,
+    typePayment: body.typePayment ?? null,
     orderHistoryId: body.orderHistoryId ?? null,
     userId,
   };

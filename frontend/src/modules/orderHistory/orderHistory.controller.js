@@ -19,22 +19,17 @@ export class OrderHistoryController {
   }
 
   // Criar pedido
-  async create(customerId, items, userId, observacao = '', sinal = true) {
+  async create(customerId, items, userId, observacao = '', sinal = true, typePayment, agenda) {
     this.loading = true
     this.error = null
 
     try {
-      const validation = validateOrder({ customerId, items, userId, sinal })
+      const validation = validateOrder({ customerId, items, userId, sinal, typePayment, agenda })
       if (!validation.isValid) {
         throw { message: 'Validação falhou', errors: validation.errors }
       }
 
-      // Sinal SEMPRE deve ser true
-      if (sinal !== true) {
-        throw new Error('Sinal (pagamento inicial) é obrigatório para criar pedido')
-      }
-
-      const order = await OrderHistoryService.create(customerId, items, userId, observacao, true)
+      const order = await OrderHistoryService.create(customerId, items, userId, observacao, sinal, typePayment, agenda)
       this.orders.push(order)
       this.notify()
       return order
@@ -92,9 +87,12 @@ export class OrderHistoryController {
   getOrderSummary(order) {
     return {
       id: order.id,
+      numeroAtendimento: order.numeroAtendimento,
       customer: order.customer,
       itemsCount: order.items.length,
       total: order.total,
+      typePayment: order.typePayment,
+      agenda: order.agenda,
       date: new Date(order.createdAt).toLocaleDateString('pt-BR'),
       time: new Date(order.createdAt).toLocaleTimeString('pt-BR'),
     }

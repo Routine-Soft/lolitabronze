@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import Navbar from '@/components/Navbar/Navbar'
 import Sidebar from '@/components/Sidebar/Sidebar'
 import './MainLayout.css'
 
@@ -16,9 +15,8 @@ export function MainLayout({ children }) {
 
   return (
     <div className="layout">
-      <Navbar onToggleSidebar={handleToggleSidebar} />
       <div className="layout-container">
-        <Sidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
+        <Sidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} onToggleSidebar={handleToggleSidebar} />
         <main className="layout-content">
           {children}
         </main>

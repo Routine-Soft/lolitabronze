@@ -15,7 +15,6 @@
 .layout-content {
   flex: 1;
   margin-left: 280px;
-  margin-top: 64px;
   overflow-y: auto;
   background-color: #05030A;
   color: #F5F5F5;
@@ -43,13 +42,10 @@
 @media (max-width: 768px) {
   .layout-content {
     margin-left: 0;
-    margin-top: 56px;
   }
 }
 
 /* Tablet */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .layout-content {
-    margin-top: 60px;
-  }
+  /* Content margin maintained at 280px for sidebar */
 }

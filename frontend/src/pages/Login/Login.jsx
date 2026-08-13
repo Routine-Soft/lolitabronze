@@ -84,7 +84,7 @@ export function Login() {
       <div className="login-card">
         {/* Header */}
         <div className="login-header">
-          <h1 className="login-title">LOLITA BRONZE</h1>
+          <img src="/src/assets/lolita.png" alt="" style={{ width: '130px', height: 'auto' }} />
           <p className="login-subtitle">Sistema de Gerenciamento</p>
         </div>
 

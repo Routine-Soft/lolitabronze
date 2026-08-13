@@ -31,3 +31,8 @@ export async function getCurrent(request, reply) {
   const { resumo } = await cashService.getSessionSummary(sessao._id);
   return reply.send(toSessionResponseDto(sessao, resumo));
 }
+
+export async function listMovements(request, reply) {
+  const movements = await cashService.listMovements();
+  return reply.send(movements);
+}

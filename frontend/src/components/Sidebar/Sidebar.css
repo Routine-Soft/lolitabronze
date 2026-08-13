@@ -35,6 +35,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  justify-content: center;
 }
 
 .sidebar-logo {
@@ -45,6 +46,22 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin: 0;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: #A9A3AE;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  color: #DFAF2B;
 }
 
 .sidebar-close {
@@ -99,12 +116,98 @@
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid #2A1A32;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.sidebar-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #DFAF2B 0%, #F5D76E 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #05030A;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  color: #F5F5F5;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-email {
+  color: #A9A3AE;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-roles {
+  color: #8414D1;
+  font-size: 10px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-footer-divider {
+  border: none;
+  border-top: 1px solid #2A1A32;
+  margin: 0;
+}
+
+.sidebar-logout-btn {
+  background: none;
+  border: none;
+  color: #F5F5F5;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-logout-btn:hover {
+  background-color: #1a0f27;
+  color: #DFAF2B;
+}
+
+.sidebar-logout-btn:active {
+  background-color: #0f0819;
 }
 
 .sidebar-footer-text {
   color: #A9A3AE;
   font-size: 11px;
+  text-align: center;
 }
 
 /* Scrollbar customizado */

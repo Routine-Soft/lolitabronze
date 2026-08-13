@@ -5,28 +5,32 @@ import { createOrderDTO, orderResponseDTO } from './orderHistory.dto.js'
 export const OrderHistoryService = {
   // Criar pedido - Protegido
   // IMPORTANTE: sinal SEMPRE deve ser true
-  async create(customerId, items, userId, observacao = '', sinal = true) {
+  // typePayment: 'pix' | 'dinheiro' | 'cartao'
+  // agenda: ISO date string (data/hora em formato 9:00-18:30, slots de 30 min)
+  async create(customerId, items, userId, observacao = '', sinal = true, typePayment, agenda) {
     const dto = createOrderDTO({
       customerId,
       items,
       userId,
       observacao,
       sinal,
+      typePayment,
+      agenda,
     })
     const response = await apiService.post('/orders', dto)
-    return orderResponseDTO(response.data)
+    return orderResponseDTO(response.data || response)
   },
 
   // Listar pedidos - Protegido
   async list() {
     const response = await apiService.get('/orders')
-    return (response.data || []).map(order => orderResponseDTO(order))
+    return (Array.isArray(response) ? response : (response.data || [])).map(order => orderResponseDTO(order))
   },
 
   // Buscar pedido por ID - Protegido
   async getById(id) {
     const response = await apiService.get(`/orders/${id}`)
-    return orderResponseDTO(response.data)
+    return orderResponseDTO(response.data || response)
   },
 }
 
