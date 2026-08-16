@@ -102,10 +102,10 @@
 }
 
 .item-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  display: block;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
   margin-bottom: 12px;
 }
 
@@ -140,7 +140,7 @@
 
 .item-card-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 12px;
@@ -211,7 +211,7 @@
 /* Stock Indicator */
 .item-stock-indicator {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .out-of-stock {

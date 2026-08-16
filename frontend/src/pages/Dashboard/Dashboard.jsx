@@ -4,6 +4,7 @@ import MainLayout from '@/layouts/MainLayout'
 import { CustomersModal } from '@/pages/Customers/CustomersModal'
 import { OrdersModal } from '@/pages/Orders/OrdersModal'
 import { ServiceSchedulingModal } from '@/pages/ServiceScheduling/ServiceSchedulingModal'
+import { printOrder } from '@/utils/printHelper'
 import './Dashboard.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
@@ -37,44 +38,96 @@ export default function Dashboard() {
   const [showCustomersModal, setShowCustomersModal] = useState(false)
   const [showOrdersModal, setShowOrdersModal] = useState(false)
   const [showServiceSchedulingModal, setShowServiceSchedulingModal] = useState(false)
+  const [dataAgendaSelecionada, setDataAgendaSelecionada] = useState(
+    new Date().toISOString().split('T')[0]
+  )
 
   const accessToken = localStorage.getItem('accessToken')
 
   // ====== FUNÇÕES DE CARREGAMENTO (com useCallback) ======
 
+  // const loadAgendaDia = useCallback(async () => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/orders`, {
+  //       headers: { 'Authorization': `Bearer ${accessToken}` },
+  //     })
+
+  //     if (!response.ok) throw new Error('Erro ao buscar agenda')
+
+  //     const data = await response.json()
+  //     console.log('Dados da agenda:', data)
+      
+  //     // A API pode retornar array direto ou dentro de um objeto
+  //     const orders = Array.isArray(data) ? data : (data.data || data.orders || [])
+      
+  //     const today = new Date()
+  //     const todayStr = today.toLocaleDateString('pt-BR')  // "12/08/2026"
+      
+  //     const agenda = orders
+  //       .filter(o => {
+  //         // Se não tem agenda ou numeroAtendimento, descarta
+  //         if (!o.agenda || !o.numeroAtendimento) return false
+          
+  //         // Comparar com o campo "dia" que já vem em formato local
+  //         return o.dia === todayStr
+  //       })
+  //       .sort((a, b) => new Date(a.agenda) - new Date(b.agenda))
+
+  //     setAgendaDia(agenda)
+  //   } catch (err) {
+  //     console.error('Erro ao carregar agenda:', err)
+  //     setAgendaDia([])
+  //   }
+  // }, [accessToken])
+
   const loadAgendaDia = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/orders`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       })
 
-      if (!response.ok) throw new Error('Erro ao buscar agenda')
+      if (!response.ok) {
+        throw new Error('Erro ao buscar agenda')
+      }
 
       const data = await response.json()
-      console.log('Dados da agenda:', data)
-      
-      // A API pode retornar array direto ou dentro de um objeto
-      const orders = Array.isArray(data) ? data : (data.data || data.orders || [])
-      
-      const today = new Date()
-      const todayStr = today.toLocaleDateString('pt-BR')  // "12/08/2026"
-      
+
+      const orders = Array.isArray(data)
+        ? data
+        : (data.data || data.orders || [])
+
+      // Data escolhida no calendário
+      const [ano, mes, dia] = dataAgendaSelecionada
+        .split('-')
+        .map(Number)
+
+      const dataSelecionada = new Date(ano, mes - 1, dia)
+
+      const dataSelecionadaStr = dataSelecionada.toLocaleDateString('pt-BR')
+
       const agenda = orders
         .filter(o => {
-          // Se não tem agenda ou numeroAtendimento, descarta
-          if (!o.agenda || !o.numeroAtendimento) return false
-          
-          // Comparar com o campo "dia" que já vem em formato local
-          return o.dia === todayStr
+          // Só mostra pedidos que possuem agendamento
+          if (!o.agenda || !o.numeroAtendimento) {
+            return false
+          }
+
+          // O backend já envia "dia" no formato DD/MM/YYYY
+          return o.dia === dataSelecionadaStr
         })
-        .sort((a, b) => new Date(a.agenda) - new Date(b.agenda))
+        .sort((a, b) => {
+          return new Date(a.agenda) - new Date(b.agenda)
+        })
 
       setAgendaDia(agenda)
+
     } catch (err) {
       console.error('Erro ao carregar agenda:', err)
       setAgendaDia([])
     }
-  }, [accessToken])
+  }, [accessToken, dataAgendaSelecionada])
 
   const loadCaixaDia = useCallback(async () => {
   try {
@@ -85,53 +138,75 @@ export default function Dashboard() {
     if (!response.ok) throw new Error('Erro ao buscar caixa')
 
     const data = await response.json()
+
     const orders = Array.isArray(data)
       ? data
       : (data.data || data.orders || [])
 
-    const today = new Date()
+    // ==========================================
+    // DATA DE HOJE — HORÁRIO LOCAL
+    // ==========================================
+    const hoje = new Date()
 
-    const todayStart = new Date(Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate(),
-      0, 0, 0, 0
-    ))
-
-    const tomorrowStart = new Date(todayStart)
-    tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1)
+    const hojeStr = hoje.toLocaleDateString('pt-BR')
 
     let totalEntradas = 0
 
     orders.forEach(o => {
+
       // ==========================================
-      // 1. PRODUTOS (sinal: false)
+      // 1. PRODUTOS
       // ==========================================
-      // Produtos entram no caixa na data de criação
+      // Produtos não possuem sinal.
+      // O valor inteiro entra no caixa no dia da compra.
       if (o.sinal === false) {
         const createdAt = new Date(o.createdAt)
-        if (createdAt >= todayStart && createdAt < tomorrowStart) {
-          totalEntradas += (o.total || 0)
+
+        const createdAtStr = createdAt.toLocaleDateString('pt-BR')
+
+        if (createdAtStr === hojeStr) {
+          totalEntradas += Number(o.total) || 0
         }
       }
 
+
       // ==========================================
-      // 2. SINAL (serviços agendados)
+      // 2. SINAL DE SERVIÇO
       // ==========================================
+      // O sinal de R$20 entra no caixa no dia
+      // em que o agendamento foi criado.
       if (o.sinal === true) {
         const createdAt = new Date(o.createdAt)
-        if (createdAt >= todayStart && createdAt < tomorrowStart) {
+
+        const createdAtStr = createdAt.toLocaleDateString('pt-BR')
+
+        if (createdAtStr === hojeStr) {
           totalEntradas += 20
         }
       }
 
+
       // ==========================================
-      // 3. COMPLEMENTO (serviços finalizados)
+      // 3. COMPLEMENTO DO SERVIÇO
       // ==========================================
-      if (o.status === 'FINALIZADO' && o.dataFinalizacao) {
+      // O complemento entra no caixa no dia
+      // em que o serviço foi FINALIZADO.
+      if (
+        o.status === 'FINALIZADO' &&
+        o.dataFinalizacao
+      ) {
         const dataFinalizacao = new Date(o.dataFinalizacao)
-        if (dataFinalizacao >= todayStart && dataFinalizacao < tomorrowStart) {
-          const complemento = (o.total || 0) - 20
+
+        const dataFinalizacaoStr =
+          dataFinalizacao.toLocaleDateString('pt-BR')
+
+        if (dataFinalizacaoStr === hojeStr) {
+
+          const sinal = o.sinal ? 20 : 0
+
+          const complemento =
+            (Number(o.total) || 0) - sinal
+
           if (complemento > 0) {
             totalEntradas += complemento
           }
@@ -151,76 +226,159 @@ export default function Dashboard() {
     setCaixaDia({
       totalEntradas: 0,
       totalSaidas: 0,
-      saldo: 0
+      saldo: 0,
     })
   }
 }, [accessToken])
 
   const loadFaturamento = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_URL}/orders`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
-      })
+  try {
+    const response = await fetch(`${API_URL}/orders`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    })
 
-      if (!response.ok) throw new Error('Erro ao buscar faturamento')
-
-      const data = await response.json()
-      const orders = Array.isArray(data) ? data : (data.data || data.orders || [])
-      
-      const today = new Date()
-      const todayStart = new Date(Date.UTC(
-        today.getUTCFullYear(),
-        today.getUTCMonth(),
-        today.getUTCDate(),
-        0, 0, 0, 0
-      ))
-      const tomorrowStart = new Date(todayStart)
-      tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1)
-
-      const fatura = { diario: 0, semanal: 0, mensal: 0, anual: 0 }
-
-      // Processar todos os pedidos (produtos e serviços finalizados)
-      orders.forEach(o => {
-        // Produtos (sinal: false) ou serviços finalizados (status: FINALIZADO)
-        if (o.sinal === false || o.status === 'FINALIZADO') {
-          const dataRef = o.sinal === false ? new Date(o.createdAt) : new Date(o.agenda)
-          const valor = o.total || 0
-
-          // DIÁRIO
-          if (dataRef >= todayStart && dataRef < tomorrowStart) {
-            fatura.diario += valor
-          }
-
-          // SEMANAL
-          const weekStart = new Date(todayStart)
-          weekStart.setUTCDate(weekStart.getUTCDate() - 7)
-          if (dataRef >= weekStart && dataRef < tomorrowStart) {
-            fatura.semanal += valor
-          }
-
-          // MENSAL
-          const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
-          const monthEnd = new Date(monthStart)
-          monthEnd.setUTCMonth(monthEnd.getUTCMonth() + 1)
-          if (dataRef >= monthStart && dataRef < monthEnd) {
-            fatura.mensal += valor
-          }
-
-          // ANUAL
-          const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1))
-          const yearEnd = new Date(Date.UTC(today.getUTCFullYear() + 1, 0, 1))
-          if (dataRef >= yearStart && dataRef < yearEnd) {
-            fatura.anual += valor
-          }
-        }
-      })
-
-      setFaturamento(fatura)
-    } catch (err) {
-      console.error('Erro ao carregar faturamento:', err)
-      setFaturamento({ diario: 0, semanal: 0, mensal: 0, anual: 0 })
+    if (!response.ok) {
+      throw new Error('Erro ao buscar faturamento')
     }
-  }, [accessToken])
+
+    const data = await response.json()
+
+    const orders = Array.isArray(data)
+      ? data
+      : (data.data || data.orders || [])
+
+    const hoje = new Date()
+
+    // ==========================================
+    // FUNÇÃO PARA PEGAR APENAS A DATA LOCAL
+    // ==========================================
+    const getDateKey = (date) => {
+      const d = new Date(date)
+
+      if (isNaN(d.getTime())) {
+        return null
+      }
+
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+
+    const hojeKey = getDateKey(hoje)
+
+    // ==========================================
+    // INÍCIO DA SEMANA
+    // ==========================================
+    const weekStart = new Date(hoje)
+    weekStart.setHours(0, 0, 0, 0)
+    weekStart.setDate(weekStart.getDate() - 7)
+
+    const fatura = {
+      diario: 0,
+      semanal: 0,
+      mensal: 0,
+      anual: 0,
+    }
+
+    // ==========================================
+    // PROCESSAR PEDIDOS
+    // ==========================================
+    orders.forEach(o => {
+
+      let dataReferencia = null
+
+      // ==========================================
+      // PRODUTOS
+      // ==========================================
+      // Produto:
+      // faturamento = data da compra
+      // valor = total do pedido
+      if (o.sinal === false) {
+
+        dataReferencia = new Date(o.createdAt)
+      }
+
+
+      // ==========================================
+      // SERVIÇOS
+      // ==========================================
+      // Serviço:
+      // só entra no faturamento quando FINALIZADO
+      // faturamento = data da agenda
+      // valor = total completo
+      if (
+        o.sinal === true &&
+        o.status === 'FINALIZADO' &&
+        o.agenda
+      ) {
+
+        dataReferencia = new Date(o.agenda)
+      }
+
+
+      // Se não tiver data válida, ignora
+      if (
+        !dataReferencia ||
+        isNaN(dataReferencia.getTime())
+      ) {
+        return
+      }
+
+      const valor = Number(o.total) || 0
+
+      // ==========================================
+      // DIÁRIO
+      // ==========================================
+      const dataKey = getDateKey(dataReferencia)
+
+      if (dataKey === hojeKey) {
+        fatura.diario += valor
+      }
+
+
+      // ==========================================
+      // SEMANAL
+      // ==========================================
+      if (dataReferencia >= weekStart && dataReferencia <= hoje) {
+        fatura.semanal += valor
+      }
+
+
+      // ==========================================
+      // MENSAL
+      // ==========================================
+      if (
+        dataReferencia.getFullYear() === hoje.getFullYear() &&
+        dataReferencia.getMonth() === hoje.getMonth()
+      ) {
+        fatura.mensal += valor
+      }
+
+
+      // ==========================================
+      // ANUAL
+      // ==========================================
+      if (
+        dataReferencia.getFullYear() === hoje.getFullYear()
+      ) {
+        fatura.anual += valor
+      }
+    })
+
+    console.log('Faturamento calculado:', fatura)
+
+    setFaturamento(fatura)
+
+  } catch (err) {
+
+    console.error('Erro ao carregar faturamento:', err)
+
+    setFaturamento({
+      diario: 0,
+      semanal: 0,
+      mensal: 0,
+      anual: 0,
+    })
+  }
+}, [accessToken])
 
   const loadSessionCaixa = useCallback(async () => {
     try {
@@ -407,6 +565,9 @@ export default function Dashboard() {
         throw new Error(error.message || 'Erro ao finalizar serviço')
       }
 
+      // Imprimir recibo (fire and forget - não bloqueia)
+      printOrder(agendaSelecionada.id || agendaSelecionada._id)
+
       // Recarregar dados
       await loadAgendaDia()
       await loadCaixaDia()
@@ -468,7 +629,33 @@ export default function Dashboard() {
           {/* Widget 1: Agenda do Dia */}
           <div className="widget agenda-widget">
             <div className="widget-header">
-              <h2>📅 Agenda do Dia</h2>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginBottom: '1rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <h2 style={{ margin: 0 }}>
+                  📅 Agenda
+                </h2>
+
+                <input
+                  type="date"
+                  value={dataAgendaSelecionada}
+                  onChange={(e) => setDataAgendaSelecionada(e.target.value)}
+                  style={{
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #ccc',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                  }}
+                />
+              </div>
               <span className="badge">{agendaDia.length}</span>
             </div>
 

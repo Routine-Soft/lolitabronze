@@ -127,16 +127,48 @@ export function ServiceSchedulingModal({ onClose }) {
 
   // Calcular preço com desconto
   const calculateDiscountedPrice = (item) => {
-    if (!item.discount?.percentual || item.discount.percentual === 0) {
-      return item.price
+    const percentual = item.discount?.percentual
+    const diasSemana = item.discount?.diasSemana
+
+    // Não existe desconto
+    if (!percentual || percentual <= 0) {
+      return null
     }
-    return item.price * (1 - item.discount.percentual / 100)
+
+    // Se não houver dias configurados,
+    // considera desconto todos os dias
+    if (!diasSemana || diasSemana.length === 0) {
+      return item.price * (1 - percentual / 100)
+    }
+
+    // 0 = domingo
+    // 1 = segunda
+    // 2 = terça
+    // 3 = quarta
+    // 4 = quinta
+    // 5 = sexta
+    // 6 = sábado
+    const hoje = new Date().getDay()
+
+    // Verifica se hoje está entre os dias de desconto
+    const temDescontoHoje = diasSemana.includes(hoje)
+
+    if (!temDescontoHoje) {
+      return null
+    }
+
+    return item.price * (1 - percentual / 100)
   }
 
   // Calcular total
-  const cartTotal = cartItems.reduce((sum, item) => {
+const cartTotal = cartItems.reduce((total, item) => {
     const discountedPrice = calculateDiscountedPrice(item)
-    return sum + (discountedPrice * item.quantity)
+
+    const price = discountedPrice !== null
+      ? discountedPrice
+      : item.price
+
+    return total + (price * item.quantity)
   }, 0)
 
   // Adicionar item ao carrinho
@@ -391,20 +423,37 @@ export function ServiceSchedulingModal({ onClose }) {
                 <div className="cart-items-list">
                   {cartItems.map(item => {
                     const discountedPrice = calculateDiscountedPrice(item)
+                    const hasDiscountToday = discountedPrice !== null
                     return (
                     <div key={item.id} className="cart-item">
                       <div className="cart-item-info">
                         <div className="cart-item-name">{item.name}</div>
                         <div className="cart-item-price">
-                          {item.discount?.percentual > 0 ? (
+                          {hasDiscountToday ? (
                             <>
-                              <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '0.5rem' }}>R$ {item.price.toFixed(2)}</span>
-                              <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>R$ {discountedPrice.toFixed(2)}</span>
+                              <span
+                                style={{
+                                  textDecoration: 'line-through',
+                                  color: '#999',
+                                  marginRight: '0.5rem'
+                                }}
+                              >
+                                R$ {item.price.toFixed(2)}
+                              </span>
+
+                              <span
+                                style={{
+                                  color: '#4CAF50',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                R$ {discountedPrice.toFixed(2)}
+                              </span>
                             </>
                           ) : (
                             <span>R$ {item.price.toFixed(2)}</span>
                           )}
-                        </div>
+                      </div>
                       </div>
                       <div className="cart-item-qty">
                         <button
@@ -432,7 +481,7 @@ export function ServiceSchedulingModal({ onClose }) {
                         </button>
                       </div>
                       <div className="cart-item-subtotal">
-                        R$ {(discountedPrice * item.quantity).toFixed(2)}
+                        R$ {((hasDiscountToday ? discountedPrice : item.price) * item.quantity).toFixed(2)}
                       </div>
                       <button
                         type="button"
@@ -487,7 +536,7 @@ export function ServiceSchedulingModal({ onClose }) {
               </div>
 
               <div className="form-group">
-                <label htmlFor="agenda-time">Horário (9:00 - 18:30, slots 30min) *</label>
+                <label htmlFor="agenda-time">Horário (9:00 - 18:30, a cada 30min) *</label>
                 {loadingSlots ? (
                   <div className="form-input" style={{ color: '#A9A3AE' }}>
                     ⏳ Carregando disponibilidade...
@@ -610,10 +659,12 @@ export function ServiceSchedulingModal({ onClose }) {
                 <div className="summary-items-list">
                   {cartItems.map(item => {
                     const discountedPrice = calculateDiscountedPrice(item)
+                    const hasDiscountToday = discountedPrice !== null
+                    const price = hasDiscountToday ? discountedPrice : item.price
                     return (
                       <div key={item.id} className="summary-item">
                         <span>{item.name} x {item.quantity}</span>
-                        <span>R$ {(discountedPrice * item.quantity).toFixed(2)}</span>
+                        <span>R$ {(price * item.quantity).toFixed(2)}</span>
                       </div>
                     )
                   })}
@@ -692,6 +743,8 @@ export function ServiceSchedulingModal({ onClose }) {
                 <div className="items-grid">
                   {filteredItems.map(item => {
                     const inCart = cartItems.find(ci => ci.id === item.id)
+                    const discountedPrice = calculateDiscountedPrice(item)
+                    const hasDiscountToday = discountedPrice !== null
                     return (
                       <div
                         key={item.id}
@@ -708,14 +761,33 @@ export function ServiceSchedulingModal({ onClose }) {
 
                         <div className="item-footer">
                           <div className="item-price">
-                              {calculateDiscountedPrice(item) < item.price ? (
-                                <>
-                                  <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '0.5rem', fontSize: '0.85rem' }}>R$ {item.price.toFixed(2)}</span>
-                                  <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>R$ {calculateDiscountedPrice(item).toFixed(2)}</span>
-                                </>
-                              ) : (
-                                <span>R$ {item.price.toFixed(2)}</span>
-                              )}
+                              {hasDiscountToday ? (
+                              <>
+                                <span
+                                  style={{
+                                    textDecoration: 'line-through',
+                                    color: '#999',
+                                    marginRight: '0.5rem',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  R$ {item.price.toFixed(2)}
+                                </span>
+
+                                <span
+                                  style={{
+                                    color: '#4CAF50',
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  R$ {discountedPrice.toFixed(2)}
+                                </span>
+                              </>
+                            ) : (
+                              <span>
+                                R$ {item.price.toFixed(2)}
+                              </span>
+                            )}
                           </div>
                           <button
                             type="button"

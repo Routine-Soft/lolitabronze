@@ -19,7 +19,8 @@ const userSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-// Nunca retornar a senha no JSON
+/* Nunca retornar a senha, token, token de atualização 
+e tokens de redefinição de senha no JSON */
 userSchema.methods.toJSON = function () {
   const obj = this.toObject()
   delete obj.password
@@ -31,6 +32,6 @@ userSchema.methods.toJSON = function () {
 }
 
 // Verifica se o modelo já foi definido
-const UserModel = mongoose.models.usuarios || mongoose.model('users', userSchema);
+const UserModel = mongoose.models.users || mongoose.model('users', userSchema);
 
 export default UserModel;

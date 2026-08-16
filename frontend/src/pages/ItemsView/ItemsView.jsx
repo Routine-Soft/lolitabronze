@@ -62,10 +62,37 @@ export function ItemsView() {
 
   // Calcular preço com desconto
   const calculateDiscountedPrice = (item) => {
-    if (!item.discount?.percentual || item.discount.percentual === 0) {
+    const percentual = item.discount?.percentual
+    const diasSemana = item.discount?.diasSemana
+
+    // Não existe desconto
+    if (!percentual || percentual <= 0) {
       return null
     }
-    return item.price * (1 - item.discount.percentual / 100)
+
+    // Se não houver dias configurados,
+    // considera desconto todos os dias
+    if (!diasSemana || diasSemana.length === 0) {
+      return item.price * (1 - percentual / 100)
+    }
+
+    // 0 = domingo
+    // 1 = segunda
+    // 2 = terça
+    // 3 = quarta
+    // 4 = quinta
+    // 5 = sexta
+    // 6 = sábado
+    const hoje = new Date().getDay()
+
+    // Verifica se hoje está entre os dias de desconto
+    const temDescontoHoje = diasSemana.includes(hoje)
+
+    if (!temDescontoHoje) {
+      return null
+    }
+
+    return item.price * (1 - percentual / 100)
   }
 
   // Obter nomes dos dias com desconto
@@ -112,13 +139,14 @@ export function ItemsView() {
           ) : (
             items.map(item => {
               const discountedPrice = calculateDiscountedPrice(item)
+              const hasDiscountToday = discountedPrice !== null
               return (
               <div key={item.id} className="item-card">
                 <div className="item-card-header">
-                  <h3 className="item-name">{item.name}</h3>
                   {activeTab === ITEM_TYPE.PRODUCT && item.quantity > 0 && (
                     <span className="item-badge">{item.quantity} em estoque</span>
                   )}
+                  <h3 className="item-name">{item.name}</h3>
                 </div>
 
                 <p className="item-description">{item.description || 'Sem descrição'}</p>
@@ -136,16 +164,20 @@ export function ItemsView() {
                     )}
                   </div>
 
-                  {item.discount?.percentual > 0 && (
+                  {hasDiscountToday && (
                     <div className="item-discount">
-                      <span className="discount-badge">{item.discount.percentual}% OFF</span>
+                      <span className="discount-badge">
+                        {item.discount.percentual}% OFF
+                      </span>
                     </div>
                   )}
                 </div>
 
                 {item.discount?.percentual > 0 && (
                   <div className="item-discount-info">
-                    <span className="discount-days">📅 {getDiscountDays(item.discount.diasSemana)}</span>
+                    <span className="discount-days">
+                      📅 Desconto só: {getDiscountDays(item.discount.diasSemana)}
+                    </span>
                   </div>
                 )}
 

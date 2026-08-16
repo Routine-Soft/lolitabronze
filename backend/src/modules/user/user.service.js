@@ -5,7 +5,6 @@ import UserModel from './user.model.js'
 import { createUserDTO, updateUserDTO, loginUserDTO } from './user.dto.js'
 import AppError from '../../errors/AppError.js'
 
-
 export const UserService = {
     async findAll() {
         return await UserModel.find()

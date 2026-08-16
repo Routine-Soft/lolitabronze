@@ -58,13 +58,6 @@ export function Sidebar({ isOpen, onClose, }) {
       path: '/sales-report',
       roles: ['recepcionista', 'super_admin'],
     },
-
-    {
-      label: 'Movimentações de Caixa',
-      icon: '🔐',
-      path: '/cashmovements',
-      roles: ['super_admin'],
-    },
   ]
 
   // Filtrar itens por role

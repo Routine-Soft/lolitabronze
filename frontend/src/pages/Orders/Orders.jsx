@@ -5,6 +5,7 @@ import ItemController from '@/modules/item/item.controller'
 import OrderHistoryController from '@/modules/orderHistory/orderHistory.controller'
 import UserController from '@/modules/user/user.controller'
 import { validateOrder } from '@/modules/orderHistory/orderHistory.dto'
+import { printOrder } from '@/utils/printHelper'
 import './Orders.css'
 
 export function Orders() {
@@ -187,6 +188,9 @@ export function Orders() {
         typePayment,
         null
       )
+
+      // Imprimir recibo (fire and forget - não bloqueia)
+      printOrder(order._id || order.id)
 
       setSuccess(
         order.numeroAtendimento
