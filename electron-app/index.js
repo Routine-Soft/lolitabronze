@@ -1,3 +1,6 @@
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const { app, BrowserWindow } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -21,7 +24,11 @@ function startBackend() {
 
   backendProcess = spawn(process.execPath, [entryFile], {
     cwd: backendPath, // importante: garante que dotenv.config() ache o .env certo
-    env: { ...process.env, PORT: BACKEND_PORT },
+    env: {
+      ...process.env,
+      PORT: BACKEND_PORT,
+      ELECTRON_RUN_AS_NODE: '1', // <- adiciona essa linha
+    },
     stdio: 'inherit',
   });
 
