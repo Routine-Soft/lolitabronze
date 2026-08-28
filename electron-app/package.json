@@ -15,15 +15,17 @@
     "electron": "^41.7.1",
     "electron-builder": "^24.13.3"
   },
-  "build": {
+"build": {
     "appId": "com.lolitabronze.app",
     "productName": "Lolita Bronze",
+    "icon": "build/icon.ico",
     "directories": {
       "output": "dist-installer"
     },
     "files": [
       "index.js",
-      "preload.js"
+      "preload.js",
+      "build/**/*"
     ],
     "extraResources": [
       {

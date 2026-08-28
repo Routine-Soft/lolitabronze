@@ -58,11 +58,15 @@ function getFrontendPath() {
 }
 
 function createWindow() {
+  const iconPath = isDev
+    ? path.join(__dirname, 'build/icon.ico')
+    : path.join(process.resourcesPath, 'build/icon.ico'); // Ou path.join(__dirname, 'build/icon.ico') se o arquivo for incluído na build
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     title: 'Lolita Bronze',
-    icon: path.join(__dirname, 'build/icon.ico'),
+    icon: path.join(__dirname, 'build/icon.ico'), // Garanta que o caminho aponta corretamente para o arquivo .ico
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
