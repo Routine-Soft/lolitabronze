@@ -9,7 +9,8 @@ import { servicoRoutes } from "./src/modules/servico/servico.routes.js";
 import { produtoRoutes } from "./src/modules/produto/produto.routes.js";
 import { orderRoutes } from "./src/modules/order/order.routes.js";
 import { printRoutes } from "./src/modules/print/print.routes.js";
-
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 dotenv.config();
 const fastify = Fastify({ logger: true })
