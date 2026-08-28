@@ -5,8 +5,9 @@ import db from './src/db/db.js'
 import { userRoutes } from "./src/modules/user/user.routes.js";
 import { cashRoutes } from "./src/modules/cash/cash.routes.js";
 import { customerRoutes } from "./src/modules/customer/customer.routes.js";
-import { itemRoutes } from "./src/modules/item/item.routes.js";
-import { orderHistoryRoutes } from "./src/modules/orderHistory/orderHistory.routes.js";
+import { servicoRoutes } from "./src/modules/servico/servico.routes.js";
+import { produtoRoutes } from "./src/modules/produto/produto.routes.js";
+import { orderRoutes } from "./src/modules/order/order.routes.js";
 import { printRoutes } from "./src/modules/print/print.routes.js";
 
 
@@ -37,8 +38,9 @@ fastify.setErrorHandler((error, request, reply) => {
 await fastify.register(userRoutes, {prefix: '/api'});
 await fastify.register(cashRoutes, {prefix: '/api'});
 await fastify.register(customerRoutes, {prefix: '/api'});
-await fastify.register(itemRoutes, {prefix: '/api'});
-await fastify.register(orderHistoryRoutes, {prefix: '/api'});
+await fastify.register(servicoRoutes, {prefix: '/api'});
+await fastify.register(produtoRoutes, {prefix: '/api'});
+await fastify.register(orderRoutes, {prefix: '/api'});
 await fastify.register(printRoutes, {prefix: '/api'});
 
 // Conexão com MongoDB e start do servidor

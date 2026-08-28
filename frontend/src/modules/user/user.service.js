@@ -1,5 +1,5 @@
 // User Service - Chamadas à API de usuários
-import apiService from '../../services/api.js'
+import apiService from '../../services/httpClient.js'
 import {
   createUserDTO,
   loginUserDTO,

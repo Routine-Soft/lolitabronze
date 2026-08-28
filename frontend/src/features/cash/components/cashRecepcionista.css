@@ -1,0 +1,350 @@
+/* =========================================================
+   CASH RECEPCIONISTA - COMPACT CARD VERSION
+   Paleta Original + Efeitos Glow & Micro-interações
+   ========================================================= */
+
+/* Container Principal (Card Pequeno / Widget Compacto) */
+.cash-card {
+  max-width: 380px;
+  width: 100%;
+  background: linear-gradient(135deg, #0D0814 0%, #12091A 100%);
+  border: 1px solid #2A1A32;
+  border-radius: 16px;
+  padding: 1.25rem;
+  color: #F5F5F5;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+/* Efeito de iluminação sutil de fundo no Card */
+.cash-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 0%, rgba(106, 13, 173, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.cash-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(106, 13, 173, 0.4);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45), 0 0 20px rgba(106, 13, 173, 0.15);
+}
+
+/* Header Compacto */
+.cash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 2px solid #2A1A32;
+}
+
+.cash-header h2 {
+  margin: 0;
+  color: #DFAF2B;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Mensagem de Alerta Compacta */
+.cash-alert-success {
+  margin: 0 0 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #34d399;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Container de Conteúdo */
+.cash-sections-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Seções compactadas */
+.cash-section {
+  background: #05030A;
+  border: 1px solid #2A1A32;
+  border-radius: 10px;
+  padding: 0.75rem;
+  transition: border-color 0.25s ease;
+}
+
+.cash-section:hover {
+  border-color: rgba(106, 13, 173, 0.3);
+}
+
+.cash-section h3 {
+  margin: 0 0 0.625rem;
+  color: #DFAF2B;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Sessão do Caixa */
+.cash-session {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.cash-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  background: #0D0814;
+  border: 1px solid #2A1A32;
+  border-radius: 8px;
+  padding: 0.5rem 0.625rem;
+}
+
+.cash-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cash-info-label {
+  color: #A9A3AE;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cash-info-val {
+  color: #F5F5F5;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.cash-badge-status {
+  background: rgba(106, 13, 173, 0.2);
+  border: 1px solid rgba(106, 13, 173, 0.4);
+  color: #DFAF2B;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Resumo de Entradas/Saídas */
+.cash-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.cash-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cash-summary-item span {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cash-summary-item strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.cash-summary-entry {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.cash-summary-entry span {
+  color: #A9A3AE;
+}
+
+.cash-summary-entry strong {
+  color: #34d399;
+}
+
+.cash-summary-entry:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15);
+}
+
+.cash-summary-exit {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.cash-summary-exit span {
+  color: #A9A3AE;
+}
+
+.cash-summary-exit strong {
+  color: #f87171;
+}
+
+.cash-summary-exit:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.15);
+}
+
+/* Formulários */
+.cash-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cash-form-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cash-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.cash-form-row .cash-input {
+  flex: 1;
+}
+
+/* Inputs / Selects */
+.cash-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.625rem;
+  background: #0D0814;
+  border: 1px solid #2A1A32;
+  border-radius: 6px;
+  color: #F5F5F5;
+  font-family: inherit;
+  font-size: 0.75rem;
+  transition: all 0.25s ease;
+}
+
+.cash-input::placeholder {
+  color: #6b6375;
+}
+
+.cash-input:focus {
+  outline: none;
+  border-color: #6A0DAD;
+  background: #12091A;
+  box-shadow: 0 0 0 2px rgba(106, 13, 173, 0.25);
+}
+
+.cash-input:hover {
+  border-color: #432950;
+}
+
+select.cash-input {
+  cursor: pointer;
+}
+
+select.cash-input option {
+  background: #0D0814;
+  color: #F5F5F5;
+}
+
+/* Botões Compactos */
+.cash-btn-primary {
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #6A0DAD 0%, #8414D1 100%);
+  color: #F5F5F5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cash-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(106, 13, 173, 0.45);
+}
+
+.cash-btn-primary:active {
+  transform: translateY(0);
+}
+
+.cash-btn-danger {
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(220, 53, 69, 0.08);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  color: #f87171;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cash-btn-danger:hover {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.cash-btn-full {
+  width: 100%;
+}
+
+/* Estado Vazio */
+.cash-empty {
+  margin: 0;
+  color: #A9A3AE;
+  font-size: 0.75rem;
+  font-style: italic;
+  text-align: center;
+  padding: 0.25rem 0;
+}
+
+/* Animação */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ajuste Responsivo Interno */
+@media (max-width: 340px) {
+  .cash-form-row, .cash-form-grid-2 {
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+}

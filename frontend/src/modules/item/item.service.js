@@ -1,5 +1,5 @@
 // Item Service - Chamadas à API de itens
-import apiService from '../../services/api.js'
+import apiService from '../../services/httpClient.js'
 import { createItemDTO, updateItemDTO, itemResponseDTO } from './item.dto.js'
 
 export const ItemService = {

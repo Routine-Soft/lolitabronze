@@ -1,52 +1,25 @@
-import MainLayout from '@/layouts/MainLayout'
-import './Home.css'
+import OrderADM from "@/features/order/components/orderADM";
+import CashRecepcionista from "@/features/cash/components/cashRecepcionista";
+import RelatorioRecepcionista from "@/features/relatorio/components/relatorioRecepcionista";
+import CustomerADM from "@/features/customer/components/customerADM";
+import "./Home.css"; // Importe seu arquivo CSS
 
-export function Home() {
+export default function Home() {
   return (
-    <MainLayout>
-      <div className="home-container">
-        <div className="home-header">
-          <h1>Dashboard</h1>
-          <p>Bem-vindo ao Lolita Bronze!</p>
-        </div>
+    <div className="home-container">
+      <h1 className="home-title">Dashborad</h1>
 
-        <div className="home-grid">
-          <div className="home-card">
-            <div className="card-icon">📊</div>
-            <h3>Vendas</h3>
-            <p className="card-value">0</p>
-            <small>Pedidos este mês</small>
-          </div>
-
-          <div className="home-card">
-            <div className="card-icon">💰</div>
-            <h3>Faturamento</h3>
-            <p className="card-value">R$ 0,00</p>
-            <small>Total este mês</small>
-          </div>
-
-          <div className="home-card">
-            <div className="card-icon">👥</div>
-            <h3>Clientes</h3>
-            <p className="card-value">0</p>
-            <small>Clientes cadastrados</small>
-          </div>
-
-          <div className="home-card">
-            <div className="card-icon">🛍️</div>
-            <h3>Produtos</h3>
-            <p className="card-value">0</p>
-            <small>Produtos disponíveis</small>
-          </div>
-        </div>
-
-        <div className="home-info">
-          <p>🚀 Mais funcionalidades em breve...</p>
-        </div>
+      {/* Componente no Topo */}
+      <div className="top-section">
+        <OrderADM />
       </div>
-    </MainLayout>
-  )
+
+      {/* Container Lado a Lado */}
+      <div className="bottom-grid">
+        <CashRecepcionista />
+        <RelatorioRecepcionista />
+        <CustomerADM />
+      </div>
+    </div>
+  );
 }
-
-export default Home
-

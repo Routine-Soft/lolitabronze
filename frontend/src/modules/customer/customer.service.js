@@ -1,5 +1,5 @@
 // Customer Service - Chamadas à API de clientes
-import apiService from '../../services/api.js'
+import apiService from '../../services/httpClient.js'
 import { createCustomerDTO, updateCustomerDTO, customerResponseDTO } from './customer.dto.js'
 
 export const CustomerService = {

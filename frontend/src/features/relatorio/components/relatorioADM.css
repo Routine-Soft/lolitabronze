@@ -1,0 +1,263 @@
+/* Layout da Página */
+.report-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #05030A;
+  color: #F5F5F5;
+  padding: 2rem;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Reset Global de Botões */
+.report-page button {
+  font-family: inherit;
+  outline: none !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease-in-out !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+/* Cabeçalho */
+.report-page-header {
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #2A1A32;
+}
+
+.report-page-header h2 {
+  margin: 0;
+  color: #DFAF2B;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+/* Seção de Filtros */
+.report-filter-section {
+  background: linear-gradient(135deg, #0D0814 0%, #12091A 100%);
+  border: 1px solid #2A1A32;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.report-quick-filters {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.report-btn-quick {
+  border: 1px solid #2A1A32 !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  background: #05030A !important;
+  color: #A9A3AE !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+}
+
+.report-btn-quick:hover {
+  border-color: #6A0DAD !important;
+  color: #FFFFFF !important;
+  background: #0D0814 !important;
+}
+
+/* Form Customizado */
+.report-custom-filter-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.report-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-date-separator {
+  font-size: 0.8125rem;
+  color: #A9A3AE;
+}
+
+.report-input-date {
+  padding: 0.5rem 0.75rem;
+  background: #05030A;
+  border: 1px solid #2A1A32;
+  border-radius: 8px;
+  color: #F5F5F5;
+  font-size: 0.8125rem;
+  color-scheme: dark;
+}
+
+.report-input-date:focus {
+  outline: none;
+  border-color: #6A0DAD;
+}
+
+/* Estados e Alertas */
+.report-loading {
+  font-size: 0.875rem;
+  color: #A9A3AE;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+.report-alert-error {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #F87171;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Grid de Resultados (Caixa / Faturamento) */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.report-section {
+  background: linear-gradient(135deg, #0D0814 0%, #12091A 100%) !important;
+  border: 1px solid #2A1A32 !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.report-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-section-header h3 {
+  margin: 0;
+  color: #DFAF2B;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.report-badge-count {
+  background: rgba(106, 13, 173, 0.2);
+  border: 1px solid rgba(106, 13, 173, 0.4);
+  color: #C084FC;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Grid de Cards KPI */
+.report-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+}
+
+.report-kpi-card {
+  background: #05030A;
+  border: 1px solid #2A1A32;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.report-kpi-card.full {
+  grid-column: span 2;
+}
+
+.report-kpi-card small {
+  font-size: 0.6875rem;
+  color: #A9A3AE;
+  text-transform: uppercase;
+}
+
+.report-kpi-card strong {
+  font-size: 1.125rem;
+  color: #F5F5F5;
+}
+
+/* Listas Detalhadas */
+.report-detail-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-detail-title {
+  font-size: 0.75rem;
+  color: #A9A3AE;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.report-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.report-list-item {
+  background: #05030A;
+  border: 1px solid #2A1A32;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: #A9A3AE;
+}
+
+.report-list-item strong {
+  color: #F5F5F5;
+}
+
+/* Botões Globais */
+.report-btn-primary {
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  background: linear-gradient(135deg, #6A0DAD 0%, #8414D1 100%) !important;
+  color: #FFFFFF !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(106, 13, 173, 0.3) !important;
+}
+
+.report-btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(106, 13, 173, 0.5) !important;
+  background: linear-gradient(135deg, #7B10C9 0%, #9518EB 100%) !important;
+}
+
+/* Utilitários de Cor */
+.txt-success { color: #34d399 !important; }
+.txt-danger { color: #f87171 !important; }
+.txt-gold { color: #DFAF2B !important; }

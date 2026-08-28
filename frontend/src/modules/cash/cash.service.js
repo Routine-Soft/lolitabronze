@@ -1,5 +1,5 @@
 // Cash Service - Chamadas à API de caixa
-import apiService from '../../services/api.js'
+import apiService from '../../services/httpClient.js'
 import {
   openCashSessionDTO,
   closeCashSessionDTO,

@@ -9,12 +9,21 @@ export function toCloseSessionDto(body, userId) {
 
 export function toCreateMovementDto(body, userId) {
   return {
-    tipo: body.tipo,
-    categoria: body.categoria,
+    tipo: body.tipo,           // 'ENTRADA' | 'SAIDA'
+    categoria: body.categoria, // 'VENDA' | 'SINAL' | 'COMPLEMENTO' | 'DESPESA' | 'SANGRIA' | 'REFORCO' | 'OUTRO'
     valor: body.valor,
     descricao: body.descricao,
     typePayment: body.typePayment ?? null,
-    orderHistoryId: body.orderHistoryId ?? null,
+    orderId: body.orderId ?? null,
+    userId,
+  };
+}
+
+export function toDespesaDto(body, userId) {
+  return {
+    valor: body.valor,
+    descricao: body.descricao,
+    typePayment: body.typePayment ?? null,
     userId,
   };
 }
@@ -29,6 +38,23 @@ export function toSessionResponseDto(session, resumo = null) {
     valorFechamentoContado: session.valorFechamentoContado,
     valorFechamentoEsperado: session.valorFechamentoEsperado,
     diferenca: session.diferenca,
-    resumo, // { totalEntradas, totalSaidas, lucro } quando solicitado
+    userAbertura: session.userAbertura,
+    userFechamento: session.userFechamento,
+    resumo, // { totalEntradas, totalSaidas, totalVendas, totalDespesas, lucro }
+  };
+}
+
+export function toMovementResponseDto(movement) {
+  return {
+    id: movement._id,
+    cashSessionId: movement.cashSessionId,
+    tipo: movement.tipo,
+    categoria: movement.categoria,
+    valor: movement.valor,
+    descricao: movement.descricao,
+    typePayment: movement.typePayment,
+    orderId: movement.orderId,
+    userId: movement.userId,
+    createdAt: movement.createdAt,
   };
 }

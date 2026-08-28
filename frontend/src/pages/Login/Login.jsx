@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserController, validateLogin } from '@/modules/user'
+import lolitaLogo from '../../assets/lolita.png';
 
 import './Login.css'
 
@@ -84,7 +85,8 @@ export function Login() {
       <div className="login-card">
         {/* Header */}
         <div className="login-header">
-          <img src="/src/assets/lolita.png" alt="" style={{ width: '130px', height: 'auto' }} />
+          
+          <img src={lolitaLogo} alt="" style={{ width: '130px', height: 'auto' }} />
           <p className="login-subtitle">Sistema de Gerenciamento</p>
         </div>
 

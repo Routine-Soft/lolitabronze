@@ -5,14 +5,22 @@ export async function createCustomer(dto) {
   return CustomerModel.create(dto);
 }
 
-export async function listCustomers(search) {
-  if (!search) return CustomerModel.find().sort({ name: 1 });
-  return CustomerModel.find({
-    $or: [
-      { name: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
-    ],
-  });
+export async function listCustomers({ search = '', page = 1, limit = 10 } = {}) {
+  const filter = search
+    ? { $or: [
+        { name: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ] }
+    : {};
+
+  const skip = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    CustomerModel.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+    CustomerModel.countDocuments(filter),
+  ]);
+
+  return { items, pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / limit) || 1 } };
 }
 
 export async function getCustomerById(id) {

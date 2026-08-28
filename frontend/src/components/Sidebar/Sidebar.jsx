@@ -1,72 +1,65 @@
 import { useAuthContext } from '@/hooks/useAuthContext'
+import { NavLink } from 'react-router-dom'
 import './Sidebar.css'
+import lolitaLogo from '../../assets/lolita.png';
 
-export function Sidebar({ isOpen, onClose, }) {
+export function Sidebar({ isOpen, onClose }) {
   const { hasRole, user, logout } = useAuthContext()
 
   const handleLogout = async () => {
     await logout()
   }
 
-  // Itens de menu baseados em roles
   const menuItems = [
     {
       label: 'Dashboard',
       icon: '📊',
-      path: '/home',
+      path: '/home-recepcionista',
       roles: ['recepcionista', 'super_admin'],
     },
     {
-      label: 'Gestão de Clientes',
+      label: 'Caixa ADM',
       icon: '👥',
-      path: '/customers',
+      path: '/cash-adm',
       roles: ['super_admin'],
     },
     {
-      label: 'Gerenciar Produtos e Serviços',
+      label: 'Serviços ADM',
       icon: '🛍️',
-      path: '/items',
+      path: '/servico-adm',
       roles: ['super_admin'],
     },
     {
-      label: 'Lista de Produtos e Serviços',
+      label: 'Produtos ADM',
       icon: '🛍️',
-      path: '/items-view',
-      roles: ['recepcionista', 'super_admin'],
+      path: '/produto-adm',
+      roles: ['super_admin'],
     },
     {
-      label: 'Venda de Produtos',
-      icon: '🛍️',
-      path: '/orders',
-      roles: ['recepcionista', 'super_admin'],
-    },
-    {
-      label: 'Agendamento de Serviços',
-      icon: '🛍️',
-      path: '/service-scheduling',
-      roles: ['recepcionista', 'super_admin'],
-    },
-    {
-      label: 'Relatório de Caixa',
+      label: 'Relatório ADM',
       icon: '📊',
-      path: '/cash-report',
-      roles: ['recepcionista', 'super_admin'],
+      path: '/relatorio-adm',
+      roles: ['super_admin'],
     },
     {
-      label: 'Relatório de Vendas',
-      icon: '📈',
-      path: '/sales-report',
-      roles: ['recepcionista', 'super_admin'],
+      label: 'Relatório de Vendas ADM',
+      icon: '📊',
+      path: '/relatorio-vendas-adm',
+      roles: ['super_admin'],
     },
+    {
+      label: 'Impressora',
+      icon: '🖨️',
+      path: '/print',
+      roles: ['recepcionista', 'super_admin'],
+    }
   ]
 
-  // Filtrar itens por role
   const availableItems = menuItems.filter(item =>
     item.roles.some(role => hasRole(role))
   )
 
   const handleItemClick = () => {
-    // Fechar sidebar em mobile após clicar
     if (window.innerWidth < 768) {
       onClose()
     }
@@ -74,61 +67,102 @@ export function Sidebar({ isOpen, onClose, }) {
 
   return (
     <>
-      {/* Overlay para mobile */}
-      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+      {isOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={onClose}
+        />
+      )}
 
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+
         <div className="sidebar-header">
-          <img src="/src/assets/lolita.png" alt="" style={{ width: '130px', height: 'auto' }} />
-          {/* <button className="sidebar-toggle" onClick={onToggleSidebar}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="3" y1="6" x2="21" y2="6" strokeWidth="2" />
-              <line x1="3" y1="12" x2="21" y2="12" strokeWidth="2" />
-              <line x1="3" y1="18" x2="21" y2="18" strokeWidth="2" />
-            </svg>
-          </button> */}
-          <button className="sidebar-close" onClick={onClose}>
+
+          <img
+            src={lolitaLogo}
+            alt="Lolita Bronze"
+            style={{
+              width: '130px',
+              height: 'auto'
+            }}
+          />
+
+          <button
+            className="sidebar-close"
+            onClick={onClose}
+          >
             ✕
           </button>
+
         </div>
 
         <nav className="sidebar-nav">
+
           {availableItems.map(item => (
-            <a
+            <NavLink
               key={item.path}
-              href={item.path}
-              className="sidebar-item"
+              to={item.path}
+              className={({ isActive }) =>
+                `sidebar-item ${isActive ? 'active' : ''}`
+              }
               onClick={handleItemClick}
             >
-              <span className="sidebar-icon">{item.icon}</span>
-              <span className="sidebar-label">{item.label}</span>
-            </a>
+              <span className="sidebar-icon">
+                {item.icon}
+              </span>
+
+              <span className="sidebar-label">
+                {item.label}
+              </span>
+            </NavLink>
           ))}
+
         </nav>
 
         <div className="sidebar-footer">
+
           <div className="sidebar-user-section">
+
             <div className="sidebar-user-avatar">
               {user?.name?.charAt(0).toUpperCase() || 'U'}
             </div>
+
             <div className="sidebar-user-info">
-              <div className="sidebar-user-name">{user?.name}</div>
-              <div className="sidebar-user-email">{user?.email}</div>
-              <div className="sidebar-user-roles">{user?.roles?.join(', ')}</div>
+
+              <div className="sidebar-user-name">
+                {user?.name}
+              </div>
+
+              <div className="sidebar-user-email">
+                {user?.email}
+              </div>
+
+              <div className="sidebar-user-roles">
+                {user?.roles?.join(', ')}
+              </div>
+
             </div>
+
           </div>
+
           <hr className="sidebar-footer-divider" />
-          <button className="sidebar-logout-btn" onClick={handleLogout}>
+
+          <button
+            className="sidebar-logout-btn"
+            onClick={handleLogout}
+          >
             Logout
           </button>
+
           <div className="sidebar-footer-text">
             <small>v1.0.0</small>
           </div>
+
         </div>
+
       </aside>
     </>
   )
 }
 
 export default Sidebar
-

@@ -1,5 +1,5 @@
 // Print Service - Chamadas à API de impressão
-import apiService from '../../services/api.js'
+import apiService from '../../services/httpClient.js'
 
 export const PrintService = {
   // Imprimir recibo do pedido - Protegido

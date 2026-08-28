@@ -1,5 +1,5 @@
 // Order History Service - Chamadas à API de pedidos
-import apiService from '../../services/api.js'
+import apiService from '../../services/httpClient.js'
 import { createOrderDTO, orderResponseDTO } from './orderHistory.dto.js'
 
 export const OrderHistoryService = {

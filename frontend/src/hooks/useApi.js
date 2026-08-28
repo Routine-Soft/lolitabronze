@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import apiService from '@/services/api'
+import apiService from '@/services/httpClient'
 
 // Hook para fazer requisições à API com estados automáticos
 export function useApi() {

@@ -1,16 +1,21 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import OrderADM from './features/order/components/orderADM';
+import CustomerADM from './features/customer/components/customerADM';
+import User from './features/user/components/User';
+import ServicoADM from './features/servico/components/servicoADM';
+import ProdutoADM from './features/produto/components/produtoADM';
+import CashADM from './features/cash/components/cashADM';
+import Print from './features/print/components/print';
+import RelatorioADM from './features/relatorio/components/relatorioADM';
+import RelatorioRecepcionista from './features/relatorio/components/relatorioRecepcionista';
+import RelatorioVendasADM from './features/relatorio/components/relatorioVendasADM';
+import CashRecepcionista from './features/cash/components/cashRecepcionista';
+import Home from './pages/Home/Home';
+
+import MainLayout from '@/layouts/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login/Login'
-import Dashboard from '@/pages/Dashboard/Dashboard'
-import Items from '@/pages/Items/Items'
-import ItemsView from '@/pages/ItemsView/ItemsView'
-import Customers from '@/pages/Customers/Customers'
-import Orders from '@/pages/Orders/Orders'
-import ServiceScheduling from '@/pages/ServiceScheduling/ServiceScheduling'
-import CashReport from '@/pages/CashReport/CashReport'
-import SalesReport from '@/pages/SalesReport/SalesReport'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 
 function App() {
   return (
@@ -19,83 +24,127 @@ function App() {
         <Routes>
           {/* Rota pública */}
           <Route path="/login" element={<Login />} />
+          <Route path="/user-login" element={<User />} />
 
           {/* Rota protegida - Dashboard */}
           <Route
             path="/home"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <MainLayout>
+                  <Home />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* Rota protegida - Items (super_admin only) */}
-          <Route
-            path="/items"
-            element={
-              <ProtectedRoute requiredRoles={['super_admin']}>
-                <Items />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Rota protegida - ItemsView (visualizar itens) */}
-          <Route
-            path="/items-view"
+          <Route 
+            path="/order-adm"
             element={
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
-                <ItemsView />
+                <MainLayout>
+                  <OrderADM />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* Rota protegida - Customers (super_admin only) */}
-          <Route
-            path="/customers"
-            element={
-              <ProtectedRoute requiredRoles={['super_admin']}>
-                <Customers />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Rota protegida - Orders (recepcionista, super_admin) */}
-          <Route
-            path="/orders"
+          <Route 
+            path="/cash-recepcionista"
             element={
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
-                <Orders />
+                <MainLayout>
+                  <CashRecepcionista />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* Rota protegida - Service Scheduling (recepcionista, super_admin) */}
-          <Route
-            path="/service-scheduling"
+          <Route 
+            path="/relatorio-recepcionista"
             element={
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
-                <ServiceScheduling />
+                <MainLayout>
+                  <RelatorioRecepcionista />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* Rota protegida - Cash Report (recepcionista, super_admin) */}
-          <Route
-            path="/cash-report"
+          <Route 
+            path="/customers-adm"
             element={
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
-                <CashReport />
+                <MainLayout>
+                  <CustomerADM />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* Rota protegida - Sales Report (recepcionista, super_admin) */}
-          <Route
-            path="/sales-report"
+          <Route 
+            path="/servico-adm"
             element={
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
-                <SalesReport />
+                <MainLayout>
+                  <ServicoADM />
+                </MainLayout>
+
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/produto-adm"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <MainLayout>
+                  <ProdutoADM />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/cash-adm"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <MainLayout>
+                  <CashADM />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/print"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <MainLayout>
+                  <Print />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/relatorio-adm"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <MainLayout>
+                  <RelatorioADM />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/relatorio-vendas-adm"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <MainLayout>
+                  <RelatorioVendasADM />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
