@@ -17,14 +17,14 @@ function getBackendPath() {
 
 function startBackend() {
   const backendPath = getBackendPath();
-  const entryFile = path.join(backendPath, 'index.js'); // <- corrigido
+  const entryFile = path.join(backendPath, 'index.js');
 
   backendProcess = spawn(process.execPath, [entryFile], {
-    cwd: backendPath, // importante: garante que dotenv.config() ache o .env certo
+    cwd: backendPath,
     env: {
       ...process.env,
       PORT: BACKEND_PORT,
-      ELECTRON_RUN_AS_NODE: '1', // <- adiciona essa linha
+      ELECTRON_RUN_AS_NODE: '1',
     },
     stdio: 'inherit',
   });
@@ -58,15 +58,13 @@ function getFrontendPath() {
 }
 
 function createWindow() {
-  const iconPath = isDev
-    ? path.join(__dirname, 'build/icon.ico')
-    : path.join(process.resourcesPath, 'build/icon.ico'); // Ou path.join(__dirname, 'build/icon.ico') se o arquivo for incluído na build
+  const iconPath = path.join(__dirname, 'build/icon.ico');
 
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     title: 'Lolita Bronze',
-    icon: iconPath, // Garanta que o caminho aponta corretamente para o arquivo .ico
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

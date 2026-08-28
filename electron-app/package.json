@@ -1,6 +1,6 @@
 {
   "name": "electron-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -15,7 +15,7 @@
     "electron": "^41.7.1",
     "electron-builder": "^24.13.3"
   },
-"build": {
+  "build": {
     "appId": "com.lolitabronze.app",
     "productName": "Lolita Bronze",
     "icon": "build/icon.ico",
