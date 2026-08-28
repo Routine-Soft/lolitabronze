@@ -62,6 +62,7 @@ function createWindow() {
     width: 1280,
     height: 800,
     title: 'Lolita Bronze',
+    icon: path.join(__dirname, 'build/icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
