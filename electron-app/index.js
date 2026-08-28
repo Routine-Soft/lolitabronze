@@ -51,10 +51,17 @@ function waitForBackend(callback, tentativas = 20) {
   });
 }
 
+function getFrontendPath() {
+  return isDev
+    ? path.join(__dirname, '../frontend/dist/index.html')
+    : path.join(process.resourcesPath, 'frontend/dist/index.html');
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    title: 'Lolita Bronze',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -62,7 +69,7 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
+  mainWindow.loadFile(getFrontendPath());
 }
 
 app.whenReady().then(() => {

@@ -23,14 +23,17 @@
     },
     "files": [
       "index.js",
-      "preload.js",
-      "../frontend/dist/**/*"
+      "preload.js"
     ],
     "extraResources": [
       {
         "from": "../backend",
         "to": "backend",
         "filter": ["**/*", "!node_modules/.cache", "!.git"]
+      },
+      {
+        "from": "../frontend/dist",
+        "to": "frontend/dist"
       }
     ],
     "win": {
