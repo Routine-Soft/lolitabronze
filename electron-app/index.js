@@ -38,17 +38,31 @@ function startBackend() {
   });
 }
 
-function waitForBackend(callback, tentativas = 20) {
-  http.get(`http://localhost:${BACKEND_PORT}/api/users`, () => {
-    callback();
-  }).on('error', () => {
-    if (tentativas <= 0) {
-      console.error('Backend não respondeu a tempo.');
+function waitForBackend(callback, tentativas = 30) {
+  const req = http.get(`http://localhost:${BACKEND_PORT}/api/users`, (res) => {
+    if (res.statusCode === 200 || res.statusCode === 304) {
+      // Backend pronto e respondendo com sucesso
       callback();
-      return;
+    } else {
+      // Backend respondeu mas ainda está inicializando banco/rotas
+      retry(callback, tentativas);
     }
-    setTimeout(() => waitForBackend(callback, tentativas - 1), 500);
   });
+
+  req.on('error', () => {
+    retry(callback, tentativas);
+  });
+
+  req.end();
+}
+
+function retry(callback, tentativas) {
+  if (tentativas <= 0) {
+    console.error('Backend não respondeu a tempo. Abrindo janela assim mesmo...');
+    callback();
+    return;
+  }
+  setTimeout(() => waitForBackend(callback, tentativas - 1), 500);
 }
 
 function getFrontendPath() {
