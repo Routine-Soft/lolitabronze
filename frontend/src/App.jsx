@@ -15,7 +15,7 @@ import MainLayout from '@/layouts/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login/Login'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 
 function App() {
   return (
