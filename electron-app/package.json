@@ -2,6 +2,7 @@
   "name": "electron-app",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "electron .",
     "build:frontend": "cd ../frontend && npm run build",
