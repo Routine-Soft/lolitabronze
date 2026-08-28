@@ -1,6 +1,6 @@
 {
   "name": "electron-app",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "build": {
     "appId": "com.lolitabronze.app",
-    "productName": "Lolita Bronze",
+    "productName": "Lolita Bronze App",
     "icon": "build/icon.ico",
     "directories": {
       "output": "dist-installer"
@@ -47,7 +47,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Lolita Bronze"
     }
   }
 }
