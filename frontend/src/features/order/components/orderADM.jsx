@@ -571,13 +571,27 @@ export default function OrderADM() {
 
             <div className="modal-body">
               <div className="details-box">
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Serviço:</strong> {selectedOrder.servicoId.name}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Descrição:</strong> {selectedOrder.servicoId.description}</p>
+                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Pedido:</strong> #{selectedOrder.id}</p>
+                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Tipo:</strong> {selectedOrder.tipo}</p>
+
+                {selectedOrder.tipo === 'SERVICO' && (
+                  <>
+                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Nº atendimento:</strong> {selectedOrder.numeroAtendimento}</p>
+                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Serviço:</strong> {selectedOrder.servicoId?.name}</p>
+                    {selectedOrder.servicoId?.description && (
+                      <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Descrição:</strong> {selectedOrder.servicoId.description}</p>
+                    )}
+                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Agenda:</strong> {selectedOrder.agendaFormatada ?? 'Sem agendamento'}</p>
+                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Sinal pago:</strong> {selectedOrder.sinalPago ? 'Sim' : 'Não'}</p>
+                  </>
+                )}
+
                 <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Cliente:</strong> {selectedOrder.customerId?.name}</p>
                 <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Telefone:</strong> {selectedOrder.customerId?.phone}</p>
+                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Atendido por:</strong> {selectedOrder.userId?.name}</p>
                 <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Criado em:</strong> {selectedOrder.dia} {selectedOrder.hora}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Agenda:</strong> {selectedOrder.agendaFormatada}</p>
                 <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Forma de pagamento:</strong> {selectedOrder.typePayment}</p>
+                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Status:</strong> {selectedOrder.status}</p>
                 {selectedOrder.observacao && (
                   <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Observação:</strong> {selectedOrder.observacao}</p>
                 )}
@@ -585,11 +599,14 @@ export default function OrderADM() {
 
               {selectedOrder.tipo === 'PRODUTO' && (
                 <div>
-                  <label className="form-label" style={{ marginBottom: '8px' }}>Produtos</label>
+                  <label className="form-label" style={{ marginBottom: '8px' }}>Itens do pedido</label>
                   <ul className="details-list">
                     {selectedOrder.produtos.map((p, index) => (
                       <li key={index} className="details-list-item">
-                        <strong>{p.produtoId?.name}</strong> — qtd: {p.quantidade} — R$ {p.precoUnitario}
+                        <strong>{p.produtoId?.name ?? 'Produto removido'}</strong>
+                        {p.produtoId?.description && <> — {p.produtoId.description}</>}
+                        <br />
+                        {p.quantidade} x R$ {p.precoUnitario} = <strong>R$ {(p.quantidade * p.precoUnitario).toFixed(2)}</strong>
                       </li>
                     ))}
                   </ul>
@@ -601,7 +618,7 @@ export default function OrderADM() {
                   <span>Pago</span>
                   <strong>R$ {selectedOrder.valorPago}</strong>
                 </div>
-                {selectedOrder.sinalPago && (
+                {selectedOrder.valorRestante > 0 && (
                   <div className="summary-row">
                     <span>Pendente</span>
                     <strong>R$ {selectedOrder.valorRestante}</strong>
@@ -611,9 +628,6 @@ export default function OrderADM() {
                   <span>Total</span>
                   <span className="total-value">R$ {selectedOrder.total}</span>
                 </div>
-                <p className="status-text">
-                  Status: <span className="status-value">{selectedOrder.status}</span>
-                </p>
               </div>
             </div>
 
@@ -640,7 +654,7 @@ export default function OrderADM() {
                 Excluir
               </button>
 
-              {selectedOrder.tipo === 'SERVICO' && selectedOrder.status === 'AGENDADO' && (
+              {selectedOrder.tipo === 'SERVICO' && (
                 <button
                   type="button"
                   className="btn-ghost"

@@ -329,3 +329,11 @@
 /* Utilitários de Cor */
 .txt-gold { color: #DFAF2B; }
 .txt-muted { color: #A9A3AE; }
+
+.service-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}

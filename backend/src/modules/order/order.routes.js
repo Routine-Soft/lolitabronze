@@ -17,4 +17,13 @@ export async function orderRoutes(fastify) {
   fastify.delete('/orders/:id', controller.deleteOrder);
   fastify.get('/orders-faturamento', controller.relatorioFaturamento);
   fastify.get('/orders-ranking', controller.ranking);
+  fastify.post('/comandas', controller.abrirComanda);
+  fastify.get('/comandas', controller.listarComandas);
+  fastify.get('/comandas/:id', controller.buscarComanda);
+  fastify.post('/comandas/:id/produtos', controller.addProdutoComanda);
+  fastify.post('/comandas/:id/servicos', controller.addServicoComanda);
+  fastify.delete('/comandas/:id/itens/:itemId', controller.removerItemComanda);
+  fastify.post('/comandas/:id/fechar', controller.fecharComanda);
+  fastify.post('/comandas/:id/cancelar', controller.cancelarComanda);
+  fastify.get('/comandas-availability', controller.slotsComanda);
 }

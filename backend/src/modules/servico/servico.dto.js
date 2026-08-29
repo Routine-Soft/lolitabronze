@@ -7,6 +7,7 @@ export function toCreateServicoDto(body) {
     priceNormal: body.priceNormal,
     pricePromotional: body.pricePromotional,
     diasPromocionais: body.diasPromocionais ?? [],
+    requerAgendamento: body.requerAgendamento ?? true,
   };
 }
 
@@ -23,5 +24,6 @@ export function toServicoResponseDto(servico) {
     pricePromotional: servico.pricePromotional,
     diasPromocionais: servico.diasPromocionais,
     price: emPromocao ? servico.pricePromotional : servico.priceNormal, // <- é SÓ ISSO que o frontend usa pra exibir
+    requerAgendamento: servico.requerAgendamento,
   };
 }

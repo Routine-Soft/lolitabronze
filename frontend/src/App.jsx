@@ -10,6 +10,7 @@ import RelatorioRecepcionista from './features/relatorio/components/relatorioRec
 import RelatorioVendasADM from './features/relatorio/components/relatorioVendasADM';
 import CashRecepcionista from './features/cash/components/cashRecepcionista';
 import Home from './pages/Home/Home';
+import ComandaADM from './features/order/components/comandaADM';
 
 import MainLayout from '@/layouts/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
@@ -44,6 +45,17 @@ function App() {
               <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
                 <MainLayout>
                   <OrderADM />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/comanda-adm"
+            element={
+              <ProtectedRoute requiredRoles={['recepcionista', 'super_admin']}>
+                <MainLayout>
+                  <ComandaADM />
                 </MainLayout>
               </ProtectedRoute>
             }

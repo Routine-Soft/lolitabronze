@@ -8,6 +8,7 @@ const servicoSchema = new mongoose.Schema(
     priceNormal: { type: Number, required: true },
     pricePromotional: { type: Number, required: true },
     diasPromocionais: { type: [Number], default: [] }, // 0=dom ... 6=sáb. vazio = nunca em promoção
+    requerAgendamento: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -596,3 +596,308 @@ export async function getRankingVendas(dataInicio, dataFim) {
 
   return { produtos, servicos, clientes };
 }
+
+// ============================================================
+// ====== COMANDA (novo modelo — usado a partir de agora) ======
+// ============================================================
+
+function assertComandaAberta(order) {
+  if (!order) {
+    const erro = new Error('Comanda não encontrada');
+    erro.statusCode = 404;
+    throw erro;
+  }
+  if (order.status !== 'ABERTA') {
+    const erro = new Error('Esta comanda não está aberta');
+    erro.statusCode = 400;
+    throw erro;
+  }
+}
+
+export async function abrirComanda(dto) {
+  if (!dto.customerId) {
+    const erro = new Error('Selecione um cliente antes de abrir a comanda');
+    erro.statusCode = 400;
+    throw erro;
+  }
+  return OrderModel.create({
+    customerId: dto.customerId,
+    userId: dto.userId,
+    status: 'ABERTA',
+    itens: [],
+    observacao: dto.observacao ?? '',
+  });
+}
+
+export async function getComandaById(id) {
+  return OrderModel.findById(id)
+    .populate('customerId')
+    .populate('userId')
+    .populate('itens.produtoId')
+    .populate('itens.servicoId');
+}
+
+export async function listComandas(filtros = {}) {
+  return OrderModel.find(filtros)
+    .populate('customerId')
+    .populate('userId')
+    .populate('itens.produtoId')
+    .populate('itens.servicoId')
+    .sort({ createdAt: -1 });
+}
+
+export async function adicionarProduto(orderId, { produtoId, quantidade }) {
+  const order = await OrderModel.findById(orderId);
+  assertComandaAberta(order);
+
+  const produto = await ProdutoModel.findById(produtoId);
+  if (!produto) {
+    const erro = new Error('Produto não encontrado');
+    erro.statusCode = 404;
+    throw erro;
+  }
+
+  const qtd = quantidade || 1;
+  if (produto.quantity !== null && produto.quantity < qtd) {
+    const erro = new Error(
+      `Estoque insuficiente para "${produto.name}". Disponível: ${produto.quantity}.`
+    );
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  const hoje = new Date().getDay();
+  const emPromocao = produto.diasPromocionais.includes(hoje);
+  const precoUnitario = emPromocao ? produto.pricePromotional : produto.priceNormal;
+
+  order.itens.push({
+    tipo: 'PRODUTO',
+    produtoId: produto._id,
+    quantidade: qtd,
+    precoUnitario,
+    valorPago: 0, // produto só paga no fechamento da comanda
+  });
+
+  await ProdutoModel.updateOne(
+    { _id: produtoId, quantity: { $ne: null } },
+    { $inc: { quantity: -qtd } }
+  );
+
+  await order.save();
+  return order;
+}
+
+export async function adicionarServico(orderId, dto) {
+  const order = await OrderModel.findById(orderId);
+  assertComandaAberta(order);
+
+  const servico = await ServicoModel.findById(dto.servicoId);
+  if (!servico) {
+    const erro = new Error('Serviço não encontrado');
+    erro.statusCode = 404;
+    throw erro;
+  }
+
+  validateTypePayment(dto.typePayment);
+
+  const requerAgendamento = servico.requerAgendamento !== false; // default true se o campo ainda não existir
+
+  if (requerAgendamento) {
+    if (!dto.agenda) {
+      const erro = new Error('Este serviço exige data de agendamento');
+      erro.statusCode = 400;
+      throw erro;
+    }
+    validateAgenda(dto.agenda);
+    const ordersInSlot = await getComandaOrdersCountInSlot(dto.agenda);
+    if (ordersInSlot >= 10) {
+      const erro = new Error('Este horário está lotado. Máximo 10 agendamentos por slot.');
+      erro.statusCode = 400;
+      throw erro;
+    }
+  }
+
+  const hoje = new Date();
+  const emPromocao = servico.diasPromocionais.includes(hoje.getDay());
+  const total = emPromocao ? servico.pricePromotional : servico.priceNormal;
+  const valorPago = dto.sinalPago ? SINAL_VALOR : total;
+  const numeroAtendimento = requerAgendamento ? await generateNumeroAtendimentoComanda() : null;
+
+  order.itens.push({
+    tipo: 'SERVICO',
+    servicoId: servico._id,
+    agenda: requerAgendamento ? new Date(dto.agenda) : null,
+    numeroAtendimento,
+    statusServico: requerAgendamento ? 'AGENDADO' : 'FINALIZADO',
+    sinalPago: dto.sinalPago,
+    precoUnitario: total,
+    valorPago,
+    typePayment: dto.typePayment,
+    faturado: !dto.sinalPago,
+    dataFaturamento: !dto.sinalPago ? new Date() : null,
+    valorFaturado: !dto.sinalPago ? total : 0,
+  });
+
+  await order.save();
+
+  await cashService.registrarVendaNoCaixa({
+    orderId: order._id,
+    categoria: dto.sinalPago ? 'SINAL' : 'VENDA',
+    valor: valorPago,
+    descricao: `${dto.sinalPago ? 'Sinal' : 'Pagamento'} do serviço "${servico.name}"`,
+    typePayment: dto.typePayment,
+    userId: dto.userId,
+  });
+
+  return order;
+}
+
+export async function removerItem(orderId, itemId) {
+  const order = await OrderModel.findById(orderId);
+  assertComandaAberta(order);
+
+  const item = order.itens.id(itemId);
+  if (!item) {
+    const erro = new Error('Item não encontrado na comanda');
+    erro.statusCode = 404;
+    throw erro;
+  }
+  if (item.valorPago > 0) {
+    const erro = new Error('Não é possível remover um item que já teve pagamento registrado');
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  if (item.tipo === 'PRODUTO') {
+    await ProdutoModel.updateOne(
+      { _id: item.produtoId, quantity: { $ne: null } },
+      { $inc: { quantity: item.quantidade } }
+    );
+  }
+
+  item.deleteOne();
+  await order.save();
+  return order;
+}
+
+function calcularPendenteComanda(order) {
+  return order.itens.reduce((soma, item) => {
+    const totalItem = item.tipo === 'PRODUTO' ? item.precoUnitario * item.quantidade : item.precoUnitario;
+    return soma + (totalItem - item.valorPago);
+  }, 0);
+}
+
+export async function fecharComanda(orderId, { typePayment, userId }) {
+  const order = await OrderModel.findById(orderId);
+  assertComandaAberta(order);
+
+  if (order.itens.length === 0) {
+    const erro = new Error('Comanda vazia — adicione ao menos um item antes de fechar');
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  validateTypePayment(typePayment);
+
+  const valorPendente = calcularPendenteComanda(order);
+
+  if (valorPendente > 0) {
+    order.itens.forEach((item) => {
+      const totalItem = item.tipo === 'PRODUTO' ? item.precoUnitario * item.quantidade : item.precoUnitario;
+      const restanteItem = totalItem - item.valorPago;
+      if (restanteItem > 0) {
+        item.valorPago = totalItem;
+        item.typePayment = typePayment;
+        item.faturado = true;
+        item.dataFaturamento = new Date();
+        item.valorFaturado = totalItem;
+        if (item.tipo === 'SERVICO' && item.statusServico === 'AGENDADO' && !item.agenda) {
+          item.statusServico = 'FINALIZADO';
+        }
+      }
+    });
+
+    await cashService.registrarVendaNoCaixa({
+      orderId: order._id,
+      categoria: 'COMPLEMENTO',
+      valor: valorPendente,
+      descricao: 'Fechamento de comanda',
+      typePayment,
+      userId,
+    });
+  }
+
+  order.status = 'FECHADA';
+  order.dataFechamento = new Date();
+  await order.save();
+
+  return order;
+}
+
+export async function cancelarComanda(orderId) {
+  const order = await OrderModel.findById(orderId);
+  assertComandaAberta(order);
+
+  for (const item of order.itens) {
+    if (item.tipo === 'PRODUTO' && item.valorPago === 0) {
+      await ProdutoModel.updateOne(
+        { _id: item.produtoId, quantity: { $ne: null } },
+        { $inc: { quantity: item.quantidade } }
+      );
+    }
+  }
+
+  order.status = 'CANCELADA';
+  await order.save();
+  return order;
+}
+
+async function getComandaOrdersCountInSlot(agendaDate) {
+  const slotStart = new Date(agendaDate);
+  slotStart.setSeconds(0);
+  slotStart.setMilliseconds(0);
+  const slotEnd = new Date(slotStart);
+  slotEnd.setMinutes(slotEnd.getMinutes() + 30);
+
+  return OrderModel.countDocuments({
+    'itens.agenda': { $gte: slotStart, $lt: slotEnd },
+    'itens.statusServico': { $ne: 'CANCELADO' },
+  });
+}
+
+async function generateNumeroAtendimentoComanda() {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+
+  const count = await OrderModel.countDocuments({
+    createdAt: { $gte: hoje, $lt: amanha },
+    'itens.tipo': 'SERVICO',
+  });
+
+  return String(count + 1).padStart(4, '0');
+}
+
+export async function getSlotAvailabilityComanda(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const slots = [];
+  for (let h = 9; h <= 18; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      if (h === 18 && m > 0) break;
+      const slotStart = new Date(year, month - 1, day, h, m, 0, 0);
+      const slotEnd = new Date(year, month - 1, day, h, m + 30, 0, 0);
+      const count = await OrderModel.countDocuments({
+        'itens.agenda': { $gte: slotStart, $lt: slotEnd },
+        'itens.statusServico': { $ne: 'CANCELADO' },
+      });
+      slots.push({
+        horario: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+        vagasPreenchidas: count,
+        vagasRestantes: Math.max(0, 10 - count),
+        disponivel: count < 10,
+      });
+    }
+  }
+  return slots;
+}

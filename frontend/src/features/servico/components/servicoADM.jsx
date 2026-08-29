@@ -13,17 +13,20 @@ const DIAS_SEMANA = [
 ];
 
 export default function ServicoADM() {
-  const {
-    servicos,
-    loading,
-    error,
-    successMessage,
-    search,
-    addServico,
-    editServico,
-    removeServico,
-    updateSearch,
-  } = useServicos(5);
+const {
+  servicos,
+  pagination,
+  page,
+  setPage,
+  loading,
+  error,
+  successMessage,
+  search,
+  addServico,
+  editServico,
+  removeServico,
+  updateSearch,
+} = useServicos(5);
 
   const [editingId, setEditingId] = useState(null);
 
@@ -32,6 +35,7 @@ export default function ServicoADM() {
   const [priceNormal, setPriceNormal] = useState('');
   const [pricePromotional, setPricePromotional] = useState('');
   const [diasPromocionais, setDiasPromocionais] = useState([]);
+  const [requerAgendamento, setRequerAgendamento] = useState(true); // novo
 
   function resetForm() {
     setName('');
@@ -39,6 +43,7 @@ export default function ServicoADM() {
     setPriceNormal('');
     setPricePromotional('');
     setDiasPromocionais([]);
+    setRequerAgendamento(true); // novo
     setEditingId(null);
   }
 
@@ -56,6 +61,7 @@ export default function ServicoADM() {
       priceNormal: Number(priceNormal),
       pricePromotional: Number(pricePromotional),
       diasPromocionais,
+      requerAgendamento, // novo
     };
 
     if (editingId) {
@@ -74,16 +80,16 @@ export default function ServicoADM() {
     setPriceNormal(servico.priceNormal);
     setPricePromotional(servico.pricePromotional);
     setDiasPromocionais(servico.diasPromocionais ?? []);
+    setRequerAgendamento(servico.requerAgendamento ?? true); // novo
   }
 
   function handleClearSearch() {
     updateSearch('');
   }
 
-  // if (loading) return <p>Carregando serviços...</p>;
   if (error) return <p>Erro: {error.message}</p>;
 
-return (
+  return (
     <div className="service-page">
       <header className="service-page-header">
         <h2>Gestão de Serviços</h2>
@@ -91,13 +97,11 @@ return (
 
       {successMessage && <p className="service-alert-success">{successMessage}</p>}
 
-      {/* ====== LAYOUT DE 2 COLUNAS ====== */}
       <div className="service-grid">
-        
-        {/* COLUNA 1: FORMULÁRIO DE CRIAÇÃO/EDIÇÃO */}
+
         <section className="service-section">
           <h3>{editingId ? "Editar Serviço" : "Criar Serviço"}</h3>
-          
+
           <form onSubmit={handleSubmit} className="service-form">
             <input
               type="text"
@@ -106,7 +110,7 @@ return (
               onChange={(e) => setName(e.target.value)}
               placeholder="Nome do serviço"
             />
-            
+
             <input
               type="text"
               className="service-input"
@@ -150,6 +154,17 @@ return (
               </div>
             </div>
 
+            <div className="service-days-container">
+              <label className="service-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={requerAgendamento}
+                  onChange={(e) => setRequerAgendamento(e.target.checked)}
+                />
+                <span>Este serviço exige agendamento (dia e horário)</span>
+              </label>
+            </div>
+
             <div className="service-form-actions">
               <button type="submit" className="service-btn-primary service-btn-full">
                 {editingId ? "Salvar edição" : "Criar serviço"}
@@ -163,7 +178,6 @@ return (
           </form>
         </section>
 
-        {/* COLUNA 2: BUSCA E LISTAGEM */}
         <section className="service-section">
           <h3>Lista de Serviços</h3>
 
@@ -175,9 +189,9 @@ return (
               onChange={(e) => updateSearch(e.target.value)}
               placeholder="Buscar serviços..."
             />
-            <button 
-              type="button" 
-              className="service-btn-secondary" 
+            <button
+              type="button"
+              className="service-btn-secondary"
               onClick={handleClearSearch}
             >
               Limpar
@@ -210,19 +224,24 @@ return (
                       .map((d) => DIAS_SEMANA.find((x) => x.valor === d)?.label)
                       .join(', ') || 'Nenhum'}
                   </p>
+
+                  <p className="service-item-meta">
+                    <strong>Agendamento:</strong>{' '}
+                    {servico.requerAgendamento ? 'Exige dia e horário' : 'Não exige'}
+                  </p>
                 </div>
 
                 <div className="service-item-actions">
-                  <button 
-                    type="button" 
-                    className="service-btn-edit" 
+                  <button
+                    type="button"
+                    className="service-btn-edit"
                     onClick={() => startEditing(servico)}
                   >
                     Editar
                   </button>
-                  <button 
-                    type="button" 
-                    className="service-btn-delete" 
+                  <button
+                    type="button"
+                    className="service-btn-delete"
                     onClick={() => removeServico(servico.id)}
                   >
                     Excluir
@@ -231,6 +250,28 @@ return (
               </li>
             ))}
           </ul>
+
+          {pagination.totalPages > 1 && (
+            <div className="service-pagination">
+              <button
+                type="button"
+                className="service-btn-secondary"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </button>
+              <span>Página {page} de {pagination.totalPages}</span>
+              <button
+                type="button"
+                className="service-btn-secondary"
+                disabled={page >= pagination.totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                Próxima
+              </button>
+            </div>
+          )}
         </section>
 
       </div>
