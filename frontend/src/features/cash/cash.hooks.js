@@ -11,6 +11,7 @@ import {
   updateMovement,
   deleteMovement,
 } from "./cash.api";
+import { notifyDashboardRefresh, onDashboardRefresh } from "../shared/events/dashboardEvents";
 
 export function useCash() {
   const [currentSession, setCurrentSession] = useState(null);
@@ -58,6 +59,12 @@ export function useCash() {
     return () => { ignore = true; };
   }, [refreshAll]);
 
+  // se qualquer outra parte do dashboard avisar que algo mudou (ex: comanda fechada em OrderADM),
+  // o caixa se atualiza sozinho também
+  useEffect(() => {
+    return onDashboardRefresh(() => refreshAll());
+  }, [refreshAll]);
+
   // ====== SESSÕES ======
 
   async function openCashSession(valorAbertura) {
@@ -65,6 +72,7 @@ export function useCash() {
       const response = await openSession({ valorAbertura });
       setSuccessMessage(response.message);
       await refreshSessions();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
@@ -76,6 +84,7 @@ export function useCash() {
       const response = await closeSession(id, { valorFechamentoContado });
       setSuccessMessage(response.message);
       await refreshSessions();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
@@ -87,6 +96,7 @@ export function useCash() {
       const response = await deleteSession(id);
       setSuccessMessage(response.message);
       await refreshSessions();
+      notifyDashboardRefresh();
     } catch (err) {
       setError(err);
     }
@@ -101,6 +111,7 @@ export function useCash() {
       const response = await addMovement(movementData);
       setSuccessMessage(response.message);
       await refreshAll();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
@@ -112,6 +123,7 @@ export function useCash() {
       const response = await addDespesa(despesaData);
       setSuccessMessage(response.message);
       await refreshAll();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
@@ -123,6 +135,7 @@ export function useCash() {
       const response = await updateMovement(id, updatedData);
       setSuccessMessage(response.message);
       await refreshAll();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
@@ -134,6 +147,7 @@ export function useCash() {
       const response = await deleteMovement(id);
       setSuccessMessage(response.message);
       await refreshAll();
+      notifyDashboardRefresh();
     } catch (err) {
       setError(err);
     }
@@ -153,6 +167,7 @@ export function useCash() {
     addCashDespesa,
     editMovement,
     removeMovement,
-    refreshMovements, // exposto separado, útil pro filtro de movimentações não mexer na sessão à toa
+    refreshMovements,
+    refreshAll,
   };
 }

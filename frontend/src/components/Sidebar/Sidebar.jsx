@@ -48,12 +48,6 @@ export function Sidebar({ isOpen, onClose }) {
       roles: ['super_admin'],
     },
     {
-      label: 'Comanda ADM',
-      icon: '📝',
-      path: '/comanda-adm',
-      roles: ['recepcionista', 'super_admin'],
-    },
-    {
       label: 'Impressora',
       icon: '🖨️',
       path: '/print',

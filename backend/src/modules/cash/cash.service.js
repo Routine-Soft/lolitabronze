@@ -117,6 +117,23 @@ export async function registrarVendaNoCaixa({ orderId, categoria, valor, descric
   });
 }
 
+// chamado pelo order.service quando um item é removido com estorno (devolução ao cliente)
+export async function registrarSaidaNoCaixa({ orderId, categoria, valor, descricao, typePayment, userId }) {
+  const sessao = await getOpenSession();
+  if (!sessao) return null; // sem caixa aberto, não lança — remoção segue existindo mesmo assim
+
+  return CashMovementModel.create({
+    cashSessionId: sessao._id,
+    tipo: 'SAIDA',
+    categoria,
+    valor,
+    descricao,
+    typePayment,
+    orderId,
+    userId,
+  });
+}
+
 export async function listMovements(filtros = {}) {
   return CashMovementModel.find(filtros)
     .populate('userId')
@@ -170,4 +187,27 @@ export async function getRelatorioCaixa(dataInicio, dataFim) {
     porTypePayment,
     quantidadeMovimentos: movimentos.length,
   };
+}
+
+export async function getVendasPorTypePayment(dataInicio, dataFim) {
+  const filtro = {
+    tipo: 'ENTRADA',
+    categoria: { $in: ['VENDA', 'SINAL', 'COMPLEMENTO'] },
+  };
+  if (dataInicio || dataFim) {
+    filtro.createdAt = {};
+    if (dataInicio) filtro.createdAt.$gte = new Date(dataInicio);
+    if (dataFim) filtro.createdAt.$lt = new Date(dataFim);
+  }
+
+  const movimentos = await CashMovementModel.find(filtro);
+
+  const porTypePayment = { pix: 0, dinheiro: 0, cartao: 0 };
+  movimentos.forEach((m) => {
+    if (m.typePayment) {
+      porTypePayment[m.typePayment] = (porTypePayment[m.typePayment] ?? 0) + m.valor;
+    }
+  });
+
+  return porTypePayment;
 }

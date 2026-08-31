@@ -10,6 +10,7 @@ export default function EntityPicker({
   onSelect,
   renderLabel,
   placeholder = 'Buscar...',
+  showPagination = true,
 }) {
   return (
     <div style={{ border: '1px solid #ccc', padding: '8px', marginBottom: '8px' }}>
@@ -41,13 +42,17 @@ export default function EntityPicker({
         </div>
       )}
 
-      <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-        Anterior
-      </button>
-      <span> Página {page} de {totalPages} </span>
-      <button type="button" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
-        Próxima
-      </button>
+      {showPagination && (
+        <>
+          <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+            Anterior
+          </button>
+          <span> Página {page} de {totalPages} </span>
+          <button type="button" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+            Próxima
+          </button>
+        </>
+      )}
     </div>
   );
 }

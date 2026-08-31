@@ -1,14 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  getAllOrders,
   createOrder,
+  getAllOrders,
+  getOrderById,
   updateOrder,
   deleteOrder,
-  updateOrderStatus,
-  pagarRestante,
+  addProduto,
+  addServico,
+  updateItemProduto,
+  updateItemServico,
+  removerItem,
+  fecharOrder,
+  cancelarOrder,
   getSlotAvailability,
-  cancelOrder,
 } from "./order.api";
+import { notifyDashboardRefresh, onDashboardRefresh } from "../shared/events/dashboardEvents";
+
+// ====== LISTA DE COMANDAS ======
 
 export function useOrders() {
   const [orders, setOrders] = useState([]);
@@ -16,32 +24,10 @@ export function useOrders() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // filtros de banco (tipo, status, dia)
   const [filtros, setFiltros] = useState({});
-  // filtro derivado, aplicado em memória (não vai pro backend)
-  const [filtroPagamento, setFiltroPagamento] = useState(''); // '' | 'PENDENTE' | 'COMPLETO'
+  const [filtroPagamento, setFiltroPagamento] = useState('');
 
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadOrders() {
-      try {
-        setLoading(true);
-        const { data } = await getAllOrders(filtros);
-        if (!ignore) setOrders(data);
-      } catch (err) {
-        if (!ignore) setError(err);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-
-    loadOrders();
-
-    return () => { ignore = true; };
-  }, [filtros]);
-
-  async function refreshOrders(filtros = {}) {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await getAllOrders(filtros);
@@ -51,61 +37,195 @@ export function useOrders() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filtros]);
 
-  async function addOrder(newOrder) {
+  useEffect(() => {
+    let ignore = false;
+    async function run() {
+      if (!ignore) await fetchOrders();
+    }
+    run();
+    return () => { ignore = true; };
+  }, [fetchOrders]);
+
+  // se qualquer parte do app avisar que algo mudou, a lista se atualiza sozinha
+  useEffect(() => {
+    return onDashboardRefresh(fetchOrders);
+  }, [fetchOrders]);
+
+  async function novaOrder(customerId, observacao) {
     try {
-      const response = await createOrder(newOrder);
-      setSuccessMessage(response.data.message);
-      await refreshOrders();
+      const response = await createOrder({ customerId, observacao });
+      setSuccessMessage(response.message);
+      await fetchOrders();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
     }
   }
 
-  async function editOrder(id, updatedOrder) {
+  async function editarOrder(id, data) {
     try {
-      const response = await updateOrder(id, updatedOrder);
-      setSuccessMessage(response.data.message);
-      await refreshOrders();
+      const response = await updateOrder(id, data);
+      setSuccessMessage(response.message);
+      await fetchOrders();
+      notifyDashboardRefresh();
       return response.data;
     } catch (err) {
       setError(err);
     }
   }
 
-  async function removeOrder(id) {
+  async function excluirOrder(id) {
     try {
       const response = await deleteOrder(id);
-      setSuccessMessage(response.data.message);
-      await refreshOrders();
+      setSuccessMessage(response.message);
+      await fetchOrders();
+      notifyDashboardRefresh();
     } catch (err) {
       setError(err);
     }
   }
 
-  // troca o status do pedido (AGENDADO -> FINALIZADO / CANCELADO)
-  // não mexe em dinheiro, só muda o estado do pedido
-  async function changeStatus(id, status) {
+  const ordersFiltradas = orders.filter((o) => {
+    if (!filtroPagamento) return true;
+    if (filtroPagamento === 'PENDENTE') return o.totalPendente > 0;
+    if (filtroPagamento === 'COMPLETO') return o.totalPendente === 0;
+    return true;
+  });
+
+  return {
+    orders: ordersFiltradas,
+    loading,
+    error,
+    successMessage,
+    filtros,
+    setFiltros,
+    filtroPagamento,
+    setFiltroPagamento,
+    novaOrder,
+    editarOrder,
+    excluirOrder,
+    fetchOrders,
+  };
+}
+
+// ====== UMA COMANDA ESPECÍFICA (tela de atendimento) ======
+
+export function useOrder(orderId) {
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const fetchOrder = useCallback(async () => {
+    if (!orderId) return;
     try {
-      const response = await updateOrderStatus(id, status);
-      setSuccessMessage(response.data.message);
-      await refreshOrders();
-      return response;
+      setLoading(true);
+      const { data } = await getOrderById(orderId);
+      setOrder(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function run() {
+      if (!ignore) await fetchOrder();
+    }
+    run();
+    return () => { ignore = true; };
+  }, [fetchOrder]);
+
+  async function adicionarProduto(produtoId, quantidade) {
+    try {
+      const response = await addProduto(orderId, { produtoId, quantidade });
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+      return response.data;
     } catch (err) {
       setError(err);
     }
   }
 
-  // registra o pagamento do valor restante de um serviço que só teve sinal pago
-  // lança o COMPLEMENTO no caixa, não mexe no status
-  async function payRemaining(id, typePayment) {
+  async function adicionarServico(dto) {
     try {
-      const response = await pagarRestante(id, typePayment);
-      setSuccessMessage(response.data.message);
-      await refreshOrders();
-      return response;
+      const response = await addServico(orderId, dto);
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+      return response.data;
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  async function editarItemProduto(itemId, quantidade) {
+    try {
+      const response = await updateItemProduto(orderId, itemId, { quantidade });
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  async function editarItemServico(itemId, agenda) {
+    try {
+      const response = await updateItemServico(orderId, itemId, { agenda });
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  async function removerItemDaOrder(itemId, estorno) {
+    try {
+      const response = await removerItem(orderId, itemId, estorno ? { estorno } : {});
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  async function fechar(pagamentos) {
+    try {
+      const response = await fecharOrder(orderId, { pagamentos });
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+      return response.data;
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  async function cancelar() {
+    try {
+      const response = await cancelarOrder(orderId);
+      setSuccessMessage(response.message);
+      await fetchOrder();
+      notifyDashboardRefresh();
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  async function excluir() {
+    try {
+      const response = await deleteOrder(orderId);
+      setSuccessMessage(response.message);
+      notifyDashboardRefresh();
     } catch (err) {
       setError(err);
     }
@@ -120,44 +240,20 @@ export function useOrders() {
     }
   }
 
-  // aplica o filtro derivado por cima da lista que já veio filtrada do backend
-  const ordersFiltrados = orders.filter((order) => {
-    if (!filtroPagamento) return true;
-    if (order.tipo !== 'SERVICO') return true; // produto sempre é pago total, não entra nesse filtro
-    if (filtroPagamento === 'PENDENTE') return order.valorRestante > 0;
-    if (filtroPagamento === 'COMPLETO') return order.valorRestante === 0;
-    return true;
-  });
-
-  async function cancelOrderRequest(id, reembolso) {
-    try {
-      const response = await cancelOrder(id, reembolso);
-
-      setSuccessMessage(response.data.message);
-
-      await refreshOrders();
-
-    } catch (error) {
-      setError(error);
-    }
-  }
-
   return {
-    orders: ordersFiltrados,
+    order,
     loading,
     error,
     successMessage,
-    filtros,
-    setFiltros,
-    filtroPagamento,
-    setFiltroPagamento,
-    addOrder,
-    editOrder,
-    removeOrder,
-    changeStatus,
-    payRemaining,
+    adicionarProduto,
+    adicionarServico,
+    editarItemProduto,
+    editarItemServico,
+    removerItem: removerItemDaOrder,
+    fechar,
+    cancelar,
+    excluir,
     checkSlotAvailability,
-    cancelOrder: cancelOrderRequest,
-    refreshOrders,
+    refresh: fetchOrder,
   };
 }

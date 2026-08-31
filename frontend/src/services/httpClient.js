@@ -140,7 +140,12 @@ export const httpClient = {
     }),
 
   // Método genérico para DELETE
-  delete: (url) => makeRequest(url, { method: 'DELETE' }),
+  // Método genérico para DELETE
+  delete: (url, body) =>
+    makeRequest(url, {
+      method: 'DELETE',
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    }),
 
   tokenManager,
 }

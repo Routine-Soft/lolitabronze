@@ -1,9 +1,9 @@
-import { useOrders } from "../order.hooks";
+import { useState } from "react";
+import { useOrders, useOrder } from "../order.hooks";
 import { useCustomers } from "../../customer/customer.hooks";
 import { useProdutos } from "../../produto/produto.hooks";
 import { useServicos } from "../../servico/servico.hooks";
 import EntityPicker from "../../shared/components/EntityPicker";
-import { useState } from "react";
 import "./orderADM.css";
 
 export default function OrderADM() {
@@ -16,246 +16,148 @@ export default function OrderADM() {
     setFiltros,
     filtroPagamento,
     setFiltroPagamento,
-    addOrder,
-    editOrder,
-    removeOrder,
-    changeStatus,
-    payRemaining,
-    cancelOrder,
-    checkSlotAvailability,
+    novaOrder,
   } = useOrders();
 
   const customersPicker = useCustomers(5);
-  const produtosPicker = useProdutos(5);
-  const servicosPicker = useServicos(5);
 
-  const [editingId, setEditingId] = useState(null);
-
+  const [isAbrirModalOpen, setIsAbrirModalOpen] = useState(false);
   const [customerId, setCustomerId] = useState('');
-  const [tipo, setTipo] = useState('SERVICO'); // 'SERVICO' | 'PRODUTO'
-  const [typePayment, setTypePayment] = useState('pix');
   const [observacao, setObservacao] = useState('');
 
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderSelecionadaId, setOrderSelecionadaId] = useState(null);
 
-  // campos só de SERVICO
-  const [servicoId, setServicoId] = useState('');
-  const [agenda, setAgenda] = useState('');
-  const [sinalPago, setSinalPago] = useState(false);
-
-  // campos só de PRODUTO — carrinho
-  const [produtosCarrinho, setProdutosCarrinho] = useState([]);
-  const [produtoIdSelecionado, setProdutoIdSelecionado] = useState('');
-  const [quantidadeSelecionada, setQuantidadeSelecionada] = useState(1);
-  const [formErro, setFormErro] = useState('');
-
-  // Modal
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [isPagarRestanteModalOpen, setIsPagarRestanteModalOpen] = useState(false);
-  const [typePaymentRestante, setTypePaymentRestante] = useState('pix');
-
-  // Slots
-  const [agendaDate, setAgendaDate] = useState('');
-  const [agendaTime, setAgendaTime] = useState('');
-  const [slots, setSlots] = useState([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-
-  function resetForm() {
-    setCustomerId('');
-    setTipo('SERVICO');
-    setTypePayment('pix');
-    setObservacao('');
-    setServicoId('');
-    setAgenda('');
-    setSinalPago(false);
-    setProdutosCarrinho([]);
-    setProdutoIdSelecionado('');
-    setQuantidadeSelecionada(1);
-    setEditingId(null);
-    setAgendaDate('');   // novo
-    setAgendaTime('');   // novo
-    setSlots([]);        // novo
-    setFormErro('');
-  }
-
-  function handleAddProdutoAoCarrinho() {
-    if (!produtoIdSelecionado) return;
-    setProdutosCarrinho([
-      ...produtosCarrinho,
-      { produtoId: produtoIdSelecionado, quantidade: quantidadeSelecionada },
-    ]);
-    setProdutoIdSelecionado('');
-    setQuantidadeSelecionada(1);
-    setFormErro('');
-  }
-
-  function handleRemoveProdutoDoCarrinho(index) {
-    setProdutosCarrinho(produtosCarrinho.filter((_, i) => i !== index));
-  }
-
-  async function handleSubmit(e) {
+  async function handleAbrirOrder(e) {
     e.preventDefault();
-
-      if (!customerId) {
-        setFormErro('Selecione um cliente antes de criar o pedido.');
-        return;
-      }
-
-    // trava local: produto sem nenhum item no carrinho não pode nem tentar submeter
-    if (tipo === 'PRODUTO' && produtosCarrinho.length === 0) {
-      setFormErro('Adicione ao menos um produto ao pedido antes de criar.');
-      return;
-    }
-    setFormErro('');
-
-    // criação exige tipo; edição não permite trocar tipo (backend não aceita)
-    const orderData = editingId
-      ? {
-          customerId,
-          typePayment,
-          observacao,
-          ...(tipo === 'SERVICO' ? { agenda } : { produtos: produtosCarrinho }),
-        }
-      : {
-          customerId,
-          tipo,
-          typePayment,
-          observacao,
-          ...(tipo === 'SERVICO'
-            ? { servicoId, agenda, sinalPago }
-            : { produtos: produtosCarrinho }),
-        };
-
-    let resultado;
-    if (editingId) {
-      resultado = await editOrder(editingId, orderData);
-    } else {
-      resultado = await addOrder(orderData);
-    }
-
-    // se addOrder/editOrder falhou, o hook já setou `error` — não fecha o modal, deixa o usuário corrigir
-    if (resultado) {
-      resetForm();
-      setIsCreateModalOpen(false);
-    }
+    if (!customerId) return;
+    const nova = await novaOrder(customerId, observacao);
+    setCustomerId('');
+    setObservacao('');
+    setIsAbrirModalOpen(false);
+    if (nova) setOrderSelecionadaId(nova.id);
   }
 
-  function startEditing(order) {
-    setEditingId(order.id);
-    setCustomerId(order.customerId?._id ?? order.customerId);
-    setTipo(order.tipo);
-    setTypePayment(order.typePayment);
-    setObservacao(order.observacao ?? '');
-
-    if (order.tipo === 'SERVICO') {
-    setServicoId(order.servicoId?._id ?? order.servicoId);
-
-      const agendaStr = order.agenda ? order.agenda.slice(0, 16) : ''; // 'YYYY-MM-DDTHH:mm'
-      setAgenda(agendaStr);
-
-      if (agendaStr) {
-        const [datePart, timePart] = agendaStr.split('T');
-        setAgendaDate(datePart);
-        setAgendaTime(timePart);
-        loadSlotsForDate(datePart); // carrega os slots do dia já agendado
-      }
-
-      setSinalPago(order.sinalPago);
-    } else {
-      setProdutosCarrinho(
-        order.produtos.map((p) => ({
-          produtoId: p.produtoId?._id ?? p.produtoId,
-          quantidade: p.quantidade,
-        }))
-      );
-    }
-
-    setIsCreateModalOpen(true);
+  if (orderSelecionadaId) {
+    return (
+      <OrderDetalhe
+        orderId={orderSelecionadaId}
+        onVoltar={() => setOrderSelecionadaId(null)}
+        onExcluida={() => setOrderSelecionadaId(null)}
+      />
+    );
   }
 
-  function handleCancelForm() {
-    resetForm();
-    setIsCreateModalOpen(false);
-  }
-
-  async function handleCancelOrder(reembolso) {
-    await cancelOrder(selectedOrder.id, reembolso);
-    setIsCancelModalOpen(false);
-    setSelectedOrder(null);
-  }
-
-  async function loadSlotsForDate(date) {
-  if (!date) {
-    setSlots([]);
-    return;
-  }
-
-  setLoadingSlots(true);
-  const data = await checkSlotAvailability(date);
-  setSlots(data ?? []);
-  setLoadingSlots(false);
-  }
-
-  function handleAgendaDateChange(date) {
-    setAgendaDate(date);
-    setAgendaTime('');
-    setAgenda('');
-    loadSlotsForDate(date);
-  }
-
-  function handleSelectSlot(horario) {
-    if (!agendaDate) return;
-    setAgendaTime(horario);
-    setAgenda(`${agendaDate}T${horario}:00`);
-  }
-
-  function handleFiltroHoje() {
-    const hoje = new Date().toISOString().split('T')[0];
-
-    setFiltros({
-      ...filtros,
-      dia: hoje,
-    });
-  }
-
-  async function handlePagarRestante() {
-    await payRemaining(selectedOrder.id, typePaymentRestante);
-    setIsPagarRestanteModalOpen(false);
-    setSelectedOrder(null);
-  }
-
-  if (loading)
-    return <div className="orderadm-card">Carregando pedidos...</div>;
-  if (error)
-    return <div className="orderadm-card">Erro: {error.message}</div>;
+  if (loading) return <div className="orderadm-card">Carregando comandas...</div>;
+  if (error) return <div className="orderadm-card">Erro: {error.message}</div>;
 
   return (
     <div className="orderadm-card">
       <div className="orderadm-header">
-        <h1>📅 Agenda</h1>
-        <button type="button" className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-          + Criar pedido
+        <h1>🧾 Comandas</h1>
+        <button type="button" className="btn-primary" onClick={() => setIsAbrirModalOpen(true)}>
+          + Abrir comanda
         </button>
       </div>
 
       {successMessage && <p className="orderadm-alert-success">{successMessage}</p>}
 
-      {/* Modal: Criar / Editar pedido */}
-      {isCreateModalOpen && (
+      <div className="filters-bar">
+        <div>
+          <label className="form-label">Dia</label>
+          <input
+            className="form-input"
+            type="date"
+            value={filtros.dia ?? ''}
+            onChange={(e) => setFiltros({ ...filtros, dia: e.target.value || undefined })}
+          />
+        </div>
+
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => setFiltros({ ...filtros, dia: new Date().toISOString().split('T')[0] })}
+        >
+          Hoje
+        </button>
+
+        <div>
+          <label className="form-label">Status</label>
+          <select
+            className="form-select"
+            value={filtros.status ?? ''}
+            onChange={(e) => setFiltros({ ...filtros, status: e.target.value || undefined })}
+          >
+            <option value="">Todas</option>
+            <option value="ABERTA">Abertas</option>
+            <option value="FECHADA">Fechadas</option>
+            <option value="CANCELADA">Canceladas</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="form-label">Pagamento</label>
+          <select
+            className="form-select"
+            value={filtroPagamento}
+            onChange={(e) => setFiltroPagamento(e.target.value)}
+          >
+            <option value="">Todos</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="COMPLETO">Pago completo</option>
+          </select>
+        </div>
+
+        <button type="button" className="btn-ghost" onClick={() => { setFiltros({}); setFiltroPagamento(''); }}>
+          Limpar filtros
+        </button>
+      </div>
+
+      <div className="orders-list">
+        {orders.length === 0 && <p className="orders-list-empty">Nenhuma comanda encontrada.</p>}
+
+        {orders.map((o) => (
+          <div key={o.id} className="orders-list-item" onClick={() => setOrderSelecionadaId(o.id)}>
+            <p>
+              <span className="order-tag">Comanda #{o.id.slice(-6)}</span>
+              {' — '}
+              <span className="order-meta">
+                <b>{o.customerId?.name} - {o.customerId?.phone}</b> &nbsp;
+                <span className={`order-status status-${o.status?.toLowerCase()}`}>{o.status}</span>
+                &nbsp;
+                <span
+                  className={
+                    o.totalPendente > 0
+                      ? 'payment-pending'
+                      : o.total > 0
+                      ? 'payment-paid'
+                      : 'payment-empty'
+                  }
+                >
+                  {o.totalPendente > 0
+                    ? `Pendente R$ ${o.totalPendente}`
+                    : o.total > 0
+                    ? 'PAGO'
+                    : 'Sem itens'}
+                </span>
+              </span>
+            </p>
+            <p className="orders-list-item-sub">
+              {o.itens.length} item(ns) — Total: R$ {o.total} —{' '}
+              {o.itens.map((i) => (i.tipo === 'PRODUTO' ? i.produtoId?.name : i.servicoId?.name)).filter(Boolean).join(', ')}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {isAbrirModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content modal-content-form">
             <div className="modal-header">
-              <h2>{editingId ? "Editar pedido" : "Criar pedido"}</h2>
-              <button type="button" className="btn-close-icon" onClick={handleCancelForm}>✕</button>
+              <h2>Abrir comanda</h2>
+              <button type="button" className="btn-close-icon" onClick={() => setIsAbrirModalOpen(false)}>✕</button>
             </div>
 
-            {error && <p className="orderadm-alert-error">{error.message}</p>}
-
-            <form id="order-form" onSubmit={handleSubmit} className="modal-body">
-              {formErro && (
-                <p className="orderadm-alert-error">{formErro}</p>
-              )}
+            <form id="abrir-order-form" onSubmit={handleAbrirOrder} className="modal-body">
               <div className="form-field form-field-bordered">
                 <label className="form-label">Cliente</label>
                 <div className="entity-picker-wrapper">
@@ -275,500 +177,620 @@ export default function OrderADM() {
                 </div>
               </div>
 
-              <div className="form-field form-field-bordered">
-                <label className="form-label">Tipo</label>
-                <select
-                  className="form-select"
-                  value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
-                  disabled={!!editingId}
-                >
-                  <option value="SERVICO">Serviço</option>
-                  <option value="PRODUTO">Produto</option>
-                </select>
-              </div>
-
-              {tipo === 'SERVICO' && (
-                <div className="form-field form-field-bordered" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {!editingId && (
-                    <div>
-                      <label className="form-label">Serviço</label>
-                      <div className="entity-picker-wrapper">
-                        <EntityPicker
-                          items={servicosPicker.servicos}
-                          loading={servicosPicker.loading}
-                          search={servicosPicker.search}
-                          onSearchChange={servicosPicker.updateSearch}
-                          page={servicosPicker.page}
-                          totalPages={servicosPicker.pagination.totalPages}
-                          onPageChange={servicosPicker.setPage}
-                          selectedId={servicoId}
-                          onSelect={setServicoId}
-                          renderLabel={(s) => `${s.name} — R$ ${s.price}`}
-                          placeholder="Buscar serviço"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="form-label">Data do agendamento</label>
-                    <input
-                      className="form-input"
-                      style={{ maxWidth: '200px' }}
-                      type="date"
-                      value={agendaDate}
-                      onChange={(e) => handleAgendaDateChange(e.target.value)}
-                    />
-                  </div>
-
-                  {agendaDate && (
-                    <div>
-                      <label className="form-label">Horário disponível</label>
-                      {loadingSlots ? (
-                        <p>Carregando horários...</p>
-                      ) : (
-                        <div className="slots-grid">
-                          {slots.map((slot) => (
-                            <button
-                              key={slot.horario}
-                              type="button"
-                              disabled={!slot.disponivel}
-                              className={`slot-btn ${agendaTime === slot.horario ? 'slot-selected' : ''}`}
-                              onClick={() => handleSelectSlot(slot.horario)}
-                            >
-                              {slot.horario}
-                              <br />
-                              <small>{slot.vagasRestantes} vaga(s)</small>
-                            </button>
-                          ))}
-                          {slots.length === 0 && <p>Nenhum horário disponível para esse dia.</p>}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {!editingId && (
-                    <div className="sinal-box">
-                      <label className="form-label">Como o cliente vai pagar?</label>
-                      <label className="sinal-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={sinalPago}
-                          onChange={() => setSinalPago(true)}
-                        />
-                        Vai pagar somente o sinal (R$ 20)
-                      </label>
-                      <label className="sinal-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={!sinalPago}
-                          onChange={() => setSinalPago(false)}
-                        />
-                        Vai pagar o valor total
-                      </label>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {tipo === 'PRODUTO' && (
-                <div className="form-field form-field-bordered">
-                  <label className="form-label">Adicionar produto</label>
-                  <div className="entity-picker-wrapper" style={{ marginBottom: '10px' }}>
-                    <EntityPicker
-                      items={produtosPicker.produtos}
-                      loading={produtosPicker.loading}
-                      search={produtosPicker.search}
-                      onSearchChange={produtosPicker.updateSearch}
-                      page={produtosPicker.page}
-                      totalPages={produtosPicker.pagination.totalPages}
-                      onPageChange={produtosPicker.setPage}
-                      selectedId={produtoIdSelecionado}
-                      onSelect={setProdutoIdSelecionado}
-                      renderLabel={(p) => `${p.name} — R$ ${p.price} (estoque: ${p.quantity ?? '—'})`}
-                      placeholder="Buscar produto"
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      className="form-input"
-                      style={{ width: '90px' }}
-                      type="number"
-                      min="1"
-                      value={quantidadeSelecionada}
-                      onChange={(e) => setQuantidadeSelecionada(Number(e.target.value))}
-                    />
-                    <button type="button" className="cart-add-btn" onClick={handleAddProdutoAoCarrinho}>
-                      + Adicionar ao pedido
-                    </button>
-                  </div>
-
-                  {produtosCarrinho.length > 0 && (
-                    <ul className="cart-list">
-                      {produtosCarrinho.map((item, index) => {
-                        const produto = produtosPicker.produtos.find((p) => p.id === item.produtoId);
-                        return (
-                          <li key={index} className="cart-item">
-                            <span>
-                              <span className="cart-item-name">{produto?.name ?? item.produtoId}</span>
-                              {' — qtd: '}{item.quantidade}
-                            </span>
-                            <button
-                              type="button"
-                              className="cart-item-remove"
-                              onClick={() => handleRemoveProdutoDoCarrinho(index)}
-                            >
-                              Remover
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
-              )}
-
-              <div className="form-field">
-                <label className="form-label">Forma de pagamento</label>
-                <select className="form-select" value={typePayment} onChange={(e) => setTypePayment(e.target.value)}>
-                  <option value="pix">Pix</option>
-                  <option value="dinheiro">Dinheiro</option>
-                  <option value="cartao">Cartão</option>
-                </select>
-              </div>
-
               <div className="form-field">
                 <label className="form-label">Observação</label>
                 <textarea
                   className="form-textarea"
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
-                  placeholder="Observação"
+                  placeholder="Observação (opcional)"
                 />
               </div>
             </form>
 
             <div className="modal-footer">
-              <button type="button" className="btn-ghost" onClick={handleCancelForm}>
+              <button type="button" className="btn-ghost" onClick={() => setIsAbrirModalOpen(false)}>
                 Cancelar
               </button>
-              <button
-                type="submit"
-                form="order-form"
-                className="btn-primary"
-                disabled={!customerId || (tipo === 'PRODUTO' && produtosCarrinho.length === 0)}
-              >
-                {editingId ? "Salvar edição" : "Criar pedido"}
+              <button type="submit" form="abrir-order-form" className="btn-primary" disabled={!customerId}>
+                Abrir comanda
               </button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Filtros */}
-      <div className="filters-bar">
-        <div>
-          <label className="form-label">Dia</label>
-          <input
-            className="form-input"
-            type="date"
-            value={filtros.dia ?? ''}
-            onChange={(e) => setFiltros({ ...filtros, dia: e.target.value || undefined })}
-          />
-        </div>
+// ====== TELA DE ATENDIMENTO DE UMA COMANDA ESPECÍFICA ======
 
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleFiltroHoje}
-        >
-          Hoje
-        </button>
+function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
+  const {
+    order,
+    loading,
+    error,
+    successMessage,
+    adicionarProduto,
+    adicionarServico,
+    editarItemProduto,
+    editarItemServico,
+    removerItem,
+    fechar,
+    cancelar,
+    excluir,
+    checkSlotAvailability,
+  } = useOrder(orderId);
 
-        <div>
-          <label className="form-label">Status</label>
-          <select
-            className="form-select"
-            value={filtros.status ?? ''}
-            onChange={(e) => setFiltros({ ...filtros, status: e.target.value || undefined })}
-          >
-            <option value="">Todos</option>
-            <option value="AGENDADO">Agendado</option>
-            <option value="FINALIZADO">Finalizado</option>
-            <option value="CANCELADO">Cancelado</option>
-          </select>
-        </div>
+  const produtosPicker = useProdutos(1000);
+  const servicosPicker = useServicos(1000);
 
-        <div>
-          <label className="form-label">Tipo</label>
-          <select
-            className="form-select"
-            value={filtros.tipo ?? ''}
-            onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value || undefined })}
-          >
-            <option value="">Todos</option>
-            <option value="SERVICO">Serviço</option>
-            <option value="PRODUTO">Produto</option>
-          </select>
-        </div>
+  const [produtoIdSelecionado, setProdutoIdSelecionado] = useState('');
+  const [quantidadeSelecionada, setQuantidadeSelecionada] = useState(1);
 
-        <div>
-          <label className="form-label">Pagamento</label>
-          <select
-            className="form-select"
-            value={filtroPagamento}
-            onChange={(e) => setFiltroPagamento(e.target.value)}
-          >
-            <option value="">Todos</option>
-            <option value="PENDENTE">Só sinal (falta pagar)</option>
-            <option value="COMPLETO">Pago completo</option>
-          </select>
-        </div>
+  const [servicoIdSelecionado, setServicoIdSelecionado] = useState('');
+  const [agendaDate, setAgendaDate] = useState('');
+  const [agendaTime, setAgendaTime] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [formaPagamentoServico, setFormaPagamentoServico] = useState('TOTAL'); // 'SINAL' | 'TOTAL' | 'NENHUM'
+  const [typePaymentServico, setTypePaymentServico] = useState('pix');
 
-        <button type="button" className="btn-ghost" onClick={() => { setFiltros({}); setFiltroPagamento(''); }}>
-          Limpar filtros
-        </button>
+  const [isFecharModalOpen, setIsFecharModalOpen] = useState(false);
+  const [pagamentos, setPagamentos] = useState([{ typePayment: 'pix', valor: '' }]);
+
+  const [itemParaRemover, setItemParaRemover] = useState(null);
+  const [estornoEscolhido, setEstornoEscolhido] = useState('NENHUM');
+
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editQuantidade, setEditQuantidade] = useState(1);
+  const [editAgendaDate, setEditAgendaDate] = useState('');
+  const [editAgendaTime, setEditAgendaTime] = useState('');
+
+  const servicoSelecionadoObj = servicosPicker.servicos.find((s) => s.id === servicoIdSelecionado);
+  const servicoExigeAgendamento = servicoSelecionadoObj?.requerAgendamento !== false;
+
+  async function handleAddProduto() {
+    if (!produtoIdSelecionado) return;
+    await adicionarProduto(produtoIdSelecionado, quantidadeSelecionada);
+    setProdutoIdSelecionado('');
+    setQuantidadeSelecionada(1);
+  }
+
+  async function loadSlotsForDate(date) {
+    if (!date) {
+      setSlots([]);
+      return;
+    }
+    setLoadingSlots(true);
+    const data = await checkSlotAvailability(date);
+    setSlots(data ?? []);
+    setLoadingSlots(false);
+  }
+
+  function handleAgendaDateChange(date) {
+    setAgendaDate(date);
+    setAgendaTime('');
+    loadSlotsForDate(date);
+  }
+
+  async function handleAddServico() {
+    if (!servicoIdSelecionado) return;
+    if (servicoExigeAgendamento && (!agendaDate || !agendaTime)) return;
+
+    const dto = {
+      servicoId: servicoIdSelecionado,
+      formaPagamento: formaPagamentoServico,
+      ...(formaPagamentoServico !== 'NENHUM' ? { typePayment: typePaymentServico } : {}),
+      ...(servicoExigeAgendamento ? { agenda: `${agendaDate}T${agendaTime}:00` } : {}),
+    };
+
+    await adicionarServico(dto);
+    setServicoIdSelecionado('');
+    setAgendaDate('');
+    setAgendaTime('');
+    setSlots([]);
+    setFormaPagamentoServico('TOTAL');
+  }
+
+  function startEditingItem(item) {
+    setEditingItemId(item.id);
+    if (item.tipo === 'PRODUTO') {
+      setEditQuantidade(item.quantidade);
+    } else {
+      const agendaStr = item.agenda ? new Date(item.agenda).toISOString().slice(0, 16) : '';
+      const [datePart, timePart] = agendaStr.split('T');
+      setEditAgendaDate(datePart ?? '');
+      setEditAgendaTime(timePart ?? '');
+      if (datePart) loadSlotsForDate(datePart);
+    }
+  }
+
+  async function handleSalvarEdicaoItem(item) {
+    if (item.tipo === 'PRODUTO') {
+      await editarItemProduto(item.id, editQuantidade);
+    } else {
+      await editarItemServico(item.id, `${editAgendaDate}T${editAgendaTime}:00`);
+    }
+    setEditingItemId(null);
+  }
+
+  // ---- remoção de item (com estorno quando já tem pagamento) ----
+
+  function handleClickRemover(item) {
+    if (item.valorPago > 0) {
+      setItemParaRemover(item);
+      setEstornoEscolhido('NENHUM');
+    } else {
+      removerItem(item.id);
+    }
+  }
+
+  async function confirmarRemocaoComEstorno() {
+    await removerItem(itemParaRemover.id, estornoEscolhido);
+    setItemParaRemover(null);
+  }
+
+  // ---- fechamento com múltiplas formas de pagamento ----
+
+  function addLinhaPagamento() {
+    setPagamentos([...pagamentos, { typePayment: 'pix', valor: '' }]);
+  }
+
+  function removerLinhaPagamento(index) {
+    setPagamentos(pagamentos.filter((_, i) => i !== index));
+  }
+
+  function updateLinhaPagamento(index, campo, valor) {
+    setPagamentos(pagamentos.map((p, i) => (i === index ? { ...p, [campo]: valor } : p)));
+  }
+
+  const somaPagamentos = pagamentos.reduce((s, p) => s + Number(p.valor || 0), 0);
+  const diferencaPagamento = order ? Number((order.totalPendente - somaPagamentos).toFixed(2)) : 0;
+
+  function preencherRestante(index) {
+    const restanteSemEssaLinha = order.totalPendente - (somaPagamentos - Number(pagamentos[index].valor || 0));
+    updateLinhaPagamento(index, 'valor', Math.max(0, restanteSemEssaLinha));
+  }
+
+  async function handleFechar() {
+    if (order.totalPendente === 0) {
+      await fechar([]);
+      setIsFecharModalOpen(false);
+      return;
+    }
+    if (diferencaPagamento !== 0) return;
+    await fechar(pagamentos.map((p) => ({ typePayment: p.typePayment, valor: Number(p.valor) })));
+    setIsFecharModalOpen(false);
+    setPagamentos([{ typePayment: 'pix', valor: '' }]);
+  }
+
+  function abrirModalFechar() {
+    setPagamentos([{ typePayment: 'pix', valor: order?.totalPendente ?? '' }]);
+    setIsFecharModalOpen(true);
+  }
+
+  if (loading) return <div className="orderadm-card">Carregando comanda...</div>;
+  if (error) return <div className="orderadm-card">Erro: {error.message}</div>;
+  if (!order) return null;
+
+  return (
+    <div className="orderadm-card">
+      <div className="orderadm-header">
+        <button type="button" className="btn-ghost" onClick={onVoltar}>← Voltar</button>
+        <h1>Comanda — {order.customerId?.name}</h1>
       </div>
 
-      {/* Lista */}
-      <div className="orders-list">
-        {orders.length === 0 && <p className="orders-list-empty">Nenhum pedido encontrado.</p>}
+      {successMessage && <p className="orderadm-alert-success">{successMessage}</p>}
 
-        {orders.map((order) => (
-          <div key={order.id} className="orders-list-item" onClick={() => setSelectedOrder(order)}>
-            <p>
-              <span className="order-tag">
-                {order.tipo === 'SERVICO' ? `#${order.numeroAtendimento}` : `Pedido #${order.id}`}
-              </span>
-              {' — '}
-              <span className="order-meta">
-                {order.agendaFormatada} <b>{order.customerId?.name} - {order.customerId?.phone}</b> &nbsp;
-                <span className={`order-status status-${order.status?.toLowerCase()}`}>
-                  {order.status}
-                </span>
-                &nbsp; &nbsp;
-              <span className={order.valorRestante > 0 ? 'payment-pending' : 'payment-paid'}>
-                {order.valorRestante > 0
-                  ? `Pendente R$ ${order.valorRestante}`
-                  : 'PAGO'}
-              </span>
-              </span>
-            </p>
+      <div className="details-box">
+        <p><strong>Status:</strong> {order.status}</p>
+        <p><strong>Cliente:</strong> {order.customerId?.name} — {order.customerId?.phone}</p>
+      </div>
+
+      {order.status === 'ABERTA' && (
+        <>
+          <div className="form-field form-field-bordered">
+            <label className="form-label">Adicionar produto</label>
+            <div className="entity-picker-wrapper" style={{ marginBottom: '10px' }}>
+              <EntityPicker
+                items={produtosPicker.produtos}
+                loading={produtosPicker.loading}
+                search={produtosPicker.search}
+                onSearchChange={produtosPicker.updateSearch}
+                page={produtosPicker.page}
+                totalPages={produtosPicker.pagination.totalPages}
+                onPageChange={produtosPicker.setPage}
+                selectedId={produtoIdSelecionado}
+                onSelect={setProdutoIdSelecionado}
+                renderLabel={(p) => `${p.name} — R$ ${p.price} (estoque: ${p.quantity ?? '—'})`}
+                placeholder="Buscar produto"
+                showPagination={false}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                className="form-input"
+                style={{ width: '90px' }}
+                type="number"
+                min="1"
+                value={quantidadeSelecionada}
+                onChange={(e) => setQuantidadeSelecionada(Number(e.target.value))}
+              />
+              <button type="button" className="cart-add-btn" onClick={handleAddProduto}>
+                + Adicionar produto
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Modal: Detalhes do pedido */}
-      {selectedOrder && (
-        <div className="modal-overlay">
-          <div className="modal-content modal-content-details">
-            <div className="modal-header">
-              <h2>Detalhes do Pedido</h2>
-              <button type="button" className="btn-close-icon" onClick={() => setSelectedOrder(null)}>✕</button>
+          <div className="form-field form-field-bordered">
+            <label className="form-label">Adicionar serviço</label>
+            <div className="entity-picker-wrapper" style={{ marginBottom: '10px' }}>
+              <EntityPicker
+                items={servicosPicker.servicos}
+                loading={servicosPicker.loading}
+                search={servicosPicker.search}
+                onSearchChange={servicosPicker.updateSearch}
+                page={servicosPicker.page}
+                totalPages={servicosPicker.pagination.totalPages}
+                onPageChange={servicosPicker.setPage}
+                selectedId={servicoIdSelecionado}
+                onSelect={setServicoIdSelecionado}
+                renderLabel={(s) => `${s.name} — R$ ${s.price}${s.requerAgendamento === false ? ' (sem agendamento)' : ''}`}
+                placeholder="Buscar serviço"
+                showPagination={false}
+              />
             </div>
 
-            <div className="modal-body">
-              <div className="details-box">
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Pedido:</strong> #{selectedOrder.id}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Tipo:</strong> {selectedOrder.tipo}</p>
-
-                {selectedOrder.tipo === 'SERVICO' && (
-                  <>
-                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Nº atendimento:</strong> {selectedOrder.numeroAtendimento}</p>
-                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Serviço:</strong> {selectedOrder.servicoId?.name}</p>
-                    {selectedOrder.servicoId?.description && (
-                      <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Descrição:</strong> {selectedOrder.servicoId.description}</p>
+            {servicoIdSelecionado && servicoExigeAgendamento && (
+              <>
+                <input
+                  className="form-input"
+                  style={{ maxWidth: '200px' }}
+                  type="date"
+                  value={agendaDate}
+                  onChange={(e) => handleAgendaDateChange(e.target.value)}
+                />
+                {agendaDate && (
+                  <div className="slots-grid">
+                    {loadingSlots ? (
+                      <p>Carregando horários...</p>
+                    ) : (
+                      slots.map((slot) => (
+                        <button
+                          key={slot.horario}
+                          type="button"
+                          disabled={!slot.disponivel}
+                          className={`slot-btn ${agendaTime === slot.horario ? 'slot-selected' : ''}`}
+                          onClick={() => setAgendaTime(slot.horario)}
+                        >
+                          {slot.horario}
+                          <br />
+                          <small>{slot.vagasRestantes} vaga(s)</small>
+                        </button>
+                      ))
                     )}
-                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Agenda:</strong> {selectedOrder.agendaFormatada ?? 'Sem agendamento'}</p>
-                    <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Sinal pago:</strong> {selectedOrder.sinalPago ? 'Sim' : 'Não'}</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {servicoIdSelecionado && (
+              <>
+                <div className="sinal-box">
+                  <label className="sinal-checkbox">
+                    <input
+                      type="radio"
+                      name="formaPagamentoServico"
+                      checked={formaPagamentoServico === 'TOTAL'}
+                      onChange={() => setFormaPagamentoServico('TOTAL')}
+                    />
+                    Vai pagar o valor total agora
+                  </label>
+                  <label className="sinal-checkbox">
+                    <input
+                      type="radio"
+                      name="formaPagamentoServico"
+                      checked={formaPagamentoServico === 'SINAL'}
+                      onChange={() => setFormaPagamentoServico('SINAL')}
+                    />
+                    Vai pagar somente o sinal (R$ 20)
+                  </label>
+                  <label className="sinal-checkbox">
+                    <input
+                      type="radio"
+                      name="formaPagamentoServico"
+                      checked={formaPagamentoServico === 'NENHUM'}
+                      onChange={() => setFormaPagamentoServico('NENHUM')}
+                    />
+                    Não vai pagar nada agora
+                  </label>
+                </div>
+
+                {formaPagamentoServico !== 'NENHUM' && (
+                  <select
+                    className="form-select"
+                    value={typePaymentServico}
+                    onChange={(e) => setTypePaymentServico(e.target.value)}
+                  >
+                    <option value="pix">Pix</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao">Cartão</option>
+                  </select>
+                )}
+
+                <button
+                  type="button"
+                  className="cart-add-btn"
+                  onClick={handleAddServico}
+                  disabled={servicoExigeAgendamento && (!agendaDate || !agendaTime)}
+                >
+                  + Adicionar serviço
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      <h3>Itens</h3>
+      <ul className="details-list">
+        {order.itens.map((item) => (
+          <li key={item.id} className="details-list-item">
+            {editingItemId === item.id ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {item.tipo === 'PRODUTO' ? (
+                  <input
+                    className="form-input"
+                    style={{ width: '90px' }}
+                    type="number"
+                    min="1"
+                    value={editQuantidade}
+                    onChange={(e) => setEditQuantidade(Number(e.target.value))}
+                  />
+                ) : (
+                  <>
+                    <input
+                      className="form-input"
+                      style={{ maxWidth: '200px' }}
+                      type="date"
+                      value={editAgendaDate}
+                      onChange={(e) => { setEditAgendaDate(e.target.value); setEditAgendaTime(''); loadSlotsForDate(e.target.value); }}
+                    />
+                    <div className="slots-grid">
+                      {slots.map((slot) => (
+                        <button
+                          key={slot.horario}
+                          type="button"
+                          disabled={!slot.disponivel}
+                          className={`slot-btn ${editAgendaTime === slot.horario ? 'slot-selected' : ''}`}
+                          onClick={() => setEditAgendaTime(slot.horario)}
+                        >
+                          {slot.horario}
+                          <br />
+                          <small>{slot.vagasRestantes} vaga(s)</small>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <div>
+                  <button type="button" className="cart-add-btn" onClick={() => handleSalvarEdicaoItem(item)}>
+                    Salvar
+                  </button>
+                  <button type="button" className="cart-item-remove" onClick={() => setEditingItemId(null)}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {item.tipo === 'PRODUTO' ? (
+                  <>
+                    <strong>{item.produtoId?.name}</strong> — qtd: {item.quantidade} — R$ {item.valorTotal}
+                  </>
+                ) : (
+                  <>
+                    <strong>{item.servicoId?.name}</strong> — R$ {item.valorTotal}
+                    {item.agenda && <> — {new Date(item.agenda).toLocaleString('pt-BR')}</>}
+                    {item.numeroAtendimento && <> — #{item.numeroAtendimento}</>}
+                    {' — '}
+                    <span className={item.valorTotal - item.valorPago > 0 ? 'payment-pending' : 'payment-paid'}>
+                      {item.valorTotal - item.valorPago > 0 ? `Pendente R$ ${item.valorTotal - item.valorPago}` : 'PAGO'}
+                    </span>
                   </>
                 )}
 
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Cliente:</strong> {selectedOrder.customerId?.name}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Telefone:</strong> {selectedOrder.customerId?.phone}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Atendido por:</strong> {selectedOrder.userId?.name}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Criado em:</strong> {selectedOrder.dia} {selectedOrder.hora}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Forma de pagamento:</strong> {selectedOrder.typePayment}</p>
-                <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Status:</strong> {selectedOrder.status}</p>
-                {selectedOrder.observacao && (
-                  <p><strong style={{ color: '#A9A3AE', fontWeight: 500 }}>Observação:</strong> {selectedOrder.observacao}</p>
+                {order.status === 'ABERTA' && (
+                  <>
+                    {item.tipo === 'PRODUTO' && item.valorPago === 0 && (
+                      <>
+                        <button type="button" className="cart-item-remove" onClick={() => startEditingItem(item)}>
+                          Editar
+                        </button>
+                        <button type="button" className="cart-item-remove" onClick={() => handleClickRemover(item)}>
+                          Remover
+                        </button>
+                      </>
+                    )}
+
+                    {item.tipo === 'SERVICO' && (
+                      <>
+                        {item.valorPago === 0 && (
+                          <button type="button" className="cart-item-remove" onClick={() => startEditingItem(item)}>
+                            Editar
+                          </button>
+                        )}
+                        {item.statusServico === 'AGENDADO' && item.valorPago > 0 && (
+                          <button type="button" className="cart-item-remove" onClick={() => startEditingItem(item)}>
+                            Reagendar
+                          </button>
+                        )}
+                        <button type="button" className="cart-item-remove" onClick={() => handleClickRemover(item)}>
+                          Remover
+                        </button>
+                      </>
+                    )}
+                  </>
                 )}
-              </div>
+              </>
+            )}
+          </li>
+        ))}
+        {order.itens.length === 0 && <li>Nenhum item adicionado ainda.</li>}
+      </ul>
 
-              {selectedOrder.tipo === 'PRODUTO' && (
-                <div>
-                  <label className="form-label" style={{ marginBottom: '8px' }}>Itens do pedido</label>
-                  <ul className="details-list">
-                    {selectedOrder.produtos.map((p, index) => (
-                      <li key={index} className="details-list-item">
-                        <strong>{p.produtoId?.name ?? 'Produto removido'}</strong>
-                        {p.produtoId?.description && <> — {p.produtoId.description}</>}
-                        <br />
-                        {p.quantidade} x R$ {p.precoUnitario} = <strong>R$ {(p.quantidade * p.precoUnitario).toFixed(2)}</strong>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+      <div className="summary-total">
+        <span>Total</span>
+        <span className="total-value">R$ {order.total}</span>
+      </div>
+      <div className="summary-row">
+        <span>Pendente</span>
+        <strong>R$ {order.totalPendente}</strong>
+      </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div className="summary-row">
-                  <span>Pago</span>
-                  <strong>R$ {selectedOrder.valorPago}</strong>
-                </div>
-                {selectedOrder.valorRestante > 0 && (
-                  <div className="summary-row">
-                    <span>Pendente</span>
-                    <strong>R$ {selectedOrder.valorRestante}</strong>
-                  </div>
-                )}
-                <div className="summary-total">
-                  <span>Total</span>
-                  <span className="total-value">R$ {selectedOrder.total}</span>
-                </div>
-              </div>
-            </div>
+      <div className="modal-footer">
+        {order.status === 'ABERTA' && (
+          <>
+            <button type="button" className="btn-danger" onClick={cancelar}>
+              Cancelar comanda
+            </button>
+            <button
+              type="button"
+              className="btn-gold"
+              disabled={order.itens.length === 0}
+              onClick={abrirModalFechar}
+            >
+              Fechar conta
+            </button>
+          </>
+        )}
+        <button
+          type="button"
+          className="btn-danger"
+          onClick={async () => {
+            await excluir();
+            onExcluida();
+          }}
+        >
+          Excluir comanda
+        </button>
+      </div>
 
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={() => {
-                  startEditing(selectedOrder);
-                  setSelectedOrder(null);
-                }}
-              >
-                Editar
-              </button>
-
-              <button
-                type="button"
-                className="btn-danger"
-                onClick={() => {
-                  removeOrder(selectedOrder.id);
-                  setSelectedOrder(null);
-                }}
-              >
-                Excluir
-              </button>
-
-              {selectedOrder.tipo === 'SERVICO' && (
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={() => {
-                    changeStatus(selectedOrder.id, 'FINALIZADO');
-                    setSelectedOrder(null);
-                  }}
-                >
-                  Marcar como Finalizado
-                </button>
-              )}
-
-              {selectedOrder.tipo === 'SERVICO' && selectedOrder.valorRestante > 0 && (
-                <button
-                  type="button"
-                  className="btn-gold"
-                  onClick={() => {
-                    setTypePaymentRestante(selectedOrder.typePayment); // sugere a forma usada no sinal, mas deixa trocar
-                    setIsPagarRestanteModalOpen(true);
-                  }}
-                >
-                  Pagar restante (R$ {selectedOrder.valorRestante})
-                </button>
-              )}
-
-              {selectedOrder.tipo === 'SERVICO' && selectedOrder.status === 'AGENDADO' && (
-                <button type="button" className="btn-danger" onClick={() => setIsCancelModalOpen(true)}>
-                  Cancelar pedido
-                </button>
-              )}
-
-              <button type="button" className="btn-primary" onClick={() => setSelectedOrder(null)}>
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Cancelar pedido */}
-      {isCancelModalOpen && selectedOrder && (
+      {/* ====== MODAL: ESTORNO AO REMOVER ITEM JÁ PAGO ====== */}
+      {itemParaRemover && (
         <div className="modal-overlay modal-overlay-top">
           <div className="modal-content modal-content-small">
             <h2 style={{ color: '#DFAF2B', fontSize: '18px', margin: '0 0 8px', fontWeight: 600 }}>
-              Cancelar pedido
+              Remover item com pagamento
             </h2>
             <p style={{ color: '#A9A3AE', fontSize: '14px', marginBottom: '16px' }}>
-              O que deseja fazer com o valor pago?
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button type="button" className="btn-ghost" onClick={() => handleCancelOrder('NENHUM')}>
-                Não devolver
-              </button>
-
-              {selectedOrder.valorRestante > 0 && (
-                <button type="button" className="btn-gold" onClick={() => handleCancelOrder('SINAL')}>
-                  Devolver sinal — R$ {selectedOrder.valorPago}
-                </button>
-              )}
-
-              {selectedOrder.valorRestante <= 0 && (
-                <button type="button" className="btn-gold" onClick={() => handleCancelOrder('TOTAL')}>
-                  Devolver valor pago — R$ {selectedOrder.valorPago}
-                </button>
-              )}
-
-              <button type="button" className="btn-danger" onClick={() => setIsCancelModalOpen(false)}>
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Pagar restante */}
-      {isPagarRestanteModalOpen && selectedOrder && (
-        <div className="modal-overlay modal-overlay-top">
-          <div className="modal-content modal-content-small">
-            <h2 style={{ color: '#DFAF2B', fontSize: '18px', margin: '0 0 8px', fontWeight: 600 }}>
-              Pagar restante — R$ {selectedOrder.valorRestante}
-            </h2>
-            <p style={{ color: '#A9A3AE', fontSize: '14px', marginBottom: '16px' }}>
-              Como o cliente vai pagar o valor restante?
+              Este item tem R$ {itemParaRemover.valorPago} pago. O que fazer com esse valor?
             </p>
 
             <select
               className="form-select"
-              value={typePaymentRestante}
-              onChange={(e) => setTypePaymentRestante(e.target.value)}
+              value={estornoEscolhido}
+              onChange={(e) => setEstornoEscolhido(e.target.value)}
             >
-              <option value="pix">Pix</option>
-              <option value="dinheiro">Dinheiro</option>
-              <option value="cartao">Cartão</option>
+              <option value="TOTAL">Devolver o valor total pago (R$ {itemParaRemover.valorPago})</option>
+              <option value="SINAL">Devolver só o sinal (R$ 20)</option>
+              <option value="NENHUM">Não devolver nada</option>
             </select>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-              <button type="button" className="btn-gold" onClick={handlePagarRestante}>
-                Confirmar pagamento
+              <button type="button" className="btn-gold" onClick={confirmarRemocaoComEstorno}>
+                Confirmar remoção
               </button>
-              <button
-                type="button"
-                className="btn-danger"
-                onClick={() => {
-                  setIsPagarRestanteModalOpen(false);
-                  setSelectedOrder(null);
-                }}
-              >
+              <button type="button" className="btn-danger" onClick={() => setItemParaRemover(null)}>
                 Cancelar
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ====== MODAL: FECHAR CONTA COM MÚLTIPLAS FORMAS DE PAGAMENTO ====== */}
+{isFecharModalOpen && (
+  <div className="modal-overlay modal-overlay-top">
+    <div className="modal-content modal-content-small">
+      <h2 style={{ color: '#DFAF2B', fontSize: '18px', margin: '0 0 8px', fontWeight: 600 }}>
+        Fechar conta — R$ {order.totalPendente}
+      </h2>
+
+      {order.totalPendente === 0 ? (
+        <p style={{ color: '#A9A3AE', fontSize: '14px', marginBottom: '16px' }}>
+          Esta comanda já está totalmente paga. Não é preciso registrar nenhum pagamento — só confirmar o fechamento.
+        </p>
+      ) : (
+        <>
+          <p style={{ color: '#A9A3AE', fontSize: '14px', marginBottom: '16px' }}>
+            Como o cliente vai pagar o valor pendente? Pode dividir em quantas formas quiser.
+          </p>
+
+          {pagamentos.map((p, index) => (
+            <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+              <select
+                className="form-select"
+                value={p.typePayment}
+                onChange={(e) => updateLinhaPagamento(index, 'typePayment', e.target.value)}
+                style={{ flex: 1 }}
+              >
+                <option value="pix">Pix</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+              </select>
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                step="0.01"
+                style={{ width: '100px' }}
+                value={p.valor}
+                onChange={(e) => updateLinhaPagamento(index, 'valor', e.target.value)}
+                placeholder="Valor"
+              />
+              <button type="button" className="btn-ghost" onClick={() => preencherRestante(index)}>
+                Preencher restante
+              </button>
+              {pagamentos.length > 1 && (
+                <button type="button" className="cart-item-remove" onClick={() => removerLinhaPagamento(index)}>
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button type="button" className="btn-ghost" onClick={addLinhaPagamento} style={{ marginBottom: '12px' }}>
+            + Adicionar outra forma de pagamento
+          </button>
+
+          <p style={{ fontSize: '14px', color: diferencaPagamento === 0 ? '#5FBF77' : '#E05353' }}>
+            {diferencaPagamento === 0
+              ? 'Valores conferem.'
+              : diferencaPagamento > 0
+              ? `Faltam R$ ${diferencaPagamento.toFixed(2)}`
+              : `Excedeu em R$ ${Math.abs(diferencaPagamento).toFixed(2)}`}
+          </p>
+        </>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+        <button
+          type="button"
+          className="btn-gold"
+          onClick={handleFechar}
+          disabled={order.totalPendente !== 0 && diferencaPagamento !== 0}
+        >
+          Confirmar fechamento
+        </button>
+        <button type="button" className="btn-danger" onClick={() => setIsFecharModalOpen(false)}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

@@ -1,6 +1,10 @@
 import httpClient from "@/services/httpClient";
 
-// order.api.js
+export async function createOrder(data) {
+  const response = await httpClient.post('/orders', data);
+  return response;
+}
+
 export async function getAllOrders(filtros = {}) {
   const filtrosLimpos = Object.fromEntries(
     Object.entries(filtros).filter(([, value]) => value !== undefined && value !== '')
@@ -15,13 +19,8 @@ export async function getOrderById(id) {
   return response;
 }
 
-export async function createOrder(newOrder) {
-  const response = await httpClient.post('/orders', newOrder);
-  return response;
-}
-
-export async function updateOrder(id, orderData) {
-  const response = await httpClient.patch(`/orders/${id}`, orderData);
+export async function updateOrder(id, data) {
+  const response = await httpClient.patch(`/orders/${id}`, data);
   return response;
 }
 
@@ -30,26 +29,42 @@ export async function deleteOrder(id) {
   return response;
 }
 
-export async function updateOrderStatus(id, status) {
-  const response = await httpClient.patch(`/orders/${id}/status`, { status });
+export async function addProduto(orderId, { produtoId, quantidade }) {
+  const response = await httpClient.post(`/orders/${orderId}/produtos`, { produtoId, quantidade });
   return response;
 }
 
-export async function pagarRestante(id, typePayment) {
-  const response = await httpClient.post(`/orders/${id}/pagamento`, { typePayment });
+export async function addServico(orderId, dto) {
+  const response = await httpClient.post(`/orders/${orderId}/servicos`, dto);
+  return response;
+}
+
+export async function updateItemProduto(orderId, itemId, { quantidade }) {
+  const response = await httpClient.patch(`/orders/${orderId}/itens/${itemId}`, { quantidade });
+  return response;
+}
+
+export async function updateItemServico(orderId, itemId, { agenda }) {
+  const response = await httpClient.patch(`/orders/${orderId}/itens/${itemId}`, { agenda });
+  return response;
+}
+
+export async function removerItem(orderId, itemId, body = {}) {
+  const response = await httpClient.delete(`/orders/${orderId}/itens/${itemId}`, body);
+  return response;
+}
+
+export async function fecharOrder(orderId, { pagamentos }) {
+  const response = await httpClient.post(`/orders/${orderId}/fechar`, { pagamentos });
+  return response;
+}
+
+export async function cancelarOrder(orderId) {
+  const response = await httpClient.post(`/orders/${orderId}/cancelar`);
   return response;
 }
 
 export async function getSlotAvailability(date) {
   const response = await httpClient.get(`/orders-availability?date=${date}`);
-  return response;
-}
-
-export async function cancelOrder(id, reembolso) {
-  const response = await httpClient.patch(
-    `/orders/${id}/cancelar`,
-    { reembolso }
-  );
-
   return response;
 }

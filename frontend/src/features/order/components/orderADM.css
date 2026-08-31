@@ -598,3 +598,7 @@
   border-color: #DFAF2B;
   background: rgba(129, 124, 111, 0.15);
 }
+
+.payment-empty {
+  color: #A9A3AE; /* cinza neutro, mesmo tom do texto secundário que você já usa */
+}
