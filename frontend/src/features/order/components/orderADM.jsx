@@ -635,7 +635,7 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
                     </span>
                   </>
                 )}
-
+                &nbsp; &nbsp;
                 {order.status === 'ABERTA' && (
                   <>
                     {item.tipo === 'PRODUTO' && item.valorPago === 0 && (
@@ -643,6 +643,7 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
                         <button type="button" className="cart-item-remove" onClick={() => startEditingItem(item)}>
                           Editar
                         </button>
+                        &nbsp; &nbsp;
                         <button type="button" className="cart-item-remove" onClick={() => handleClickRemover(item)}>
                           Remover
                         </button>
@@ -656,11 +657,13 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
                             Editar
                           </button>
                         )}
+                        
                         {item.statusServico === 'AGENDADO' && item.valorPago > 0 && (
                           <button type="button" className="cart-item-remove" onClick={() => startEditingItem(item)}>
                             Reagendar
                           </button>
                         )}
+                        &nbsp; &nbsp;
                         <button type="button" className="cart-item-remove" onClick={() => handleClickRemover(item)}>
                           Remover
                         </button>
