@@ -13,10 +13,12 @@ export async function list(request, reply) {
   if (status) filtros.status = status;
   if (dia) {
     const [year, month, day] = dia.split('-').map(Number);
-    filtros.createdAt = {
-      $gte: new Date(year, month - 1, day, 0, 0, 0, 0),
-      $lt: new Date(year, month - 1, day + 1, 0, 0, 0, 0),
-    };
+    const inicio = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const fim = new Date(year, month - 1, day + 1, 0, 0, 0, 0);
+    filtros.$or = [
+      { createdAt: { $gte: inicio, $lt: fim } },
+      { 'itens.agenda': { $gte: inicio, $lt: fim } },
+    ];
   }
   const orders = await orderService.listOrders(filtros);
   return reply.send({ data: orders.map(toOrderResponseDto) });

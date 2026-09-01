@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useOrders, useOrder } from "../order.hooks";
 import { useCustomers } from "../../customer/customer.hooks";
 import { useProdutos } from "../../produto/produto.hooks";
@@ -26,6 +26,32 @@ export default function OrderADM() {
   const [observacao, setObservacao] = useState('');
 
   const [orderSelecionadaId, setOrderSelecionadaId] = useState(null);
+  const [diaInput, setDiaInput] = useState(filtros.dia ?? '');
+  const [prevFiltrosDia, setPrevFiltrosDia] = useState(filtros.dia ?? '');
+  const diaDebounceRef = useRef(null);
+
+  const filtrosDiaNormalizado = filtros.dia ?? '';
+  if (filtrosDiaNormalizado !== prevFiltrosDia) {
+    setPrevFiltrosDia(filtrosDiaNormalizado);
+    setDiaInput(filtrosDiaNormalizado);
+  }
+
+  function handleDiaChange(value) {
+    setDiaInput(value);
+    if (diaDebounceRef.current) clearTimeout(diaDebounceRef.current);
+
+    diaDebounceRef.current = setTimeout(() => {
+      if (!value) {
+        setFiltros((f) => ({ ...f, dia: undefined }));
+        return;
+      }
+      const ano = Number(value.slice(0, 4));
+      // só aplica quando o ano parece completo e plausível — evita disparar com "0002" no meio da digitação
+      if (ano >= 2000 && ano <= 2100) {
+        setFiltros((f) => ({ ...f, dia: value }));
+      }
+    }, 400);
+  }
 
   async function handleAbrirOrder(e) {
     e.preventDefault();
@@ -67,8 +93,8 @@ export default function OrderADM() {
           <input
             className="form-input"
             type="date"
-            value={filtros.dia ?? ''}
-            onChange={(e) => setFiltros({ ...filtros, dia: e.target.value || undefined })}
+            value={diaInput}
+            onChange={(e) => handleDiaChange(e.target.value)}
           />
         </div>
 
@@ -113,6 +139,9 @@ export default function OrderADM() {
       </div>
 
       <div className="orders-list">
+      <p className="orders-total-count">
+        Total de Comandas: <span className="orders-total-count-badge">{orders.length}</span>
+      </p>
         {orders.length === 0 && <p className="orders-list-empty">Nenhuma comanda encontrada.</p>}
 
         {orders.map((o) => (
@@ -122,7 +151,11 @@ export default function OrderADM() {
               {' — '}
               <span className="order-meta">
                 <b>{o.customerId?.name} - {o.customerId?.phone}</b> &nbsp;
-                <span className={`order-status status-${o.status?.toLowerCase()}`}>{o.status}</span>
+                <span className={`order-status status-${o.status?.toLowerCase()}`}>
+                  {o.status === 'ABERTA' && 'COMANDA ABERTA'}
+                  {o.status === 'FECHADA' && 'COMANDA FECHADA'}
+                  {o.status === 'CANCELADA' && 'COMANDA CANCELADA'}
+                </span>
                 &nbsp;
                 <span
                   className={
@@ -134,7 +167,7 @@ export default function OrderADM() {
                   }
                 >
                   {o.totalPendente > 0
-                    ? `Pendente R$ ${o.totalPendente}`
+                    ? `PENDENTE! R$ ${o.totalPendente}`
                     : o.total > 0
                     ? 'PAGO'
                     : 'Sem itens'}
@@ -440,6 +473,7 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
                 placeholder="Buscar serviço"
                 showPagination={false}
               />
+              <br />
             </div>
 
             {servicoIdSelecionado && servicoExigeAgendamento && (
@@ -506,6 +540,7 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
                     Não vai pagar nada agora
                   </label>
                 </div>
+                <br/>
 
                 {formaPagamentoServico !== 'NENHUM' && (
                   <select
@@ -518,14 +553,14 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
                     <option value="cartao">Cartão</option>
                   </select>
                 )}
-
+                <br/>
                 <button
                   type="button"
                   className="cart-add-btn"
                   onClick={handleAddServico}
                   disabled={servicoExigeAgendamento && (!agendaDate || !agendaTime)}
                 >
-                  + Adicionar serviço
+                  FINALIZAR
                 </button>
               </>
             )}

@@ -286,7 +286,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #6A0DAD 0%, #8414D1 100%);
+  background: #02b102;
   color: #F5F5F5;
   font-size: 12px;
   font-weight: 600;
@@ -555,17 +555,17 @@
 }
 
 .payment-paid {
-  background: rgba(43, 151, 223, 0.15);
-  color: #2b97df;
-  border: 1px solid rgba(43, 151, 223, 0.3);
+  background: #02b102;
+  color: #fdfdfd;
+  border: 1px solid #0f5e0f;
   border-radius: 5px;
   font-weight: 600;
   padding: 3px 9px;
 }
 
 .payment-pending {
-  background: rgba(228, 5, 5, 0.15);
-  color: #fd0b0b;
+  background: #ffa500;
+  color: #ffffff;
   border: 1px solid rgba(255, 12, 12, 0.3);
   border-radius: 5px;
   font-weight: 600;
@@ -601,4 +601,48 @@
 
 .payment-empty {
   color: #A9A3AE; /* cinza neutro, mesmo tom do texto secundário que você já usa */
+}
+
+.order-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.status-aberta {
+  background-color: #2D6CDF;
+  color: #fff;
+}
+
+.status-fechada {
+  background-color: #02b102;
+  color: #fff;
+}
+
+.status-cancelada {
+  background-color: #E05353;
+  color: #fff;
+}
+
+.orders-total-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.orders-total-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background-color: #DFAF2B;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 700;
 }

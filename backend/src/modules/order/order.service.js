@@ -134,7 +134,6 @@ export async function deleteOrder(id) {
     throw erro;
   }
 
-  // devolve estoque de produtos ainda não pagos, mesma regra do cancelamento
   for (const item of order.itens) {
     if (item.tipo === 'PRODUTO' && item.valorPago === 0) {
       await ProdutoModel.updateOne(
@@ -481,6 +480,9 @@ export async function cancelarOrder(orderId) {
         { _id: item.produtoId, quantity: { $ne: null } },
         { $inc: { quantity: item.quantidade } }
       );
+    }
+    if (item.tipo === 'SERVICO' && item.statusServico === 'AGENDADO') {
+      item.statusServico = 'CANCELADO';
     }
   }
 
