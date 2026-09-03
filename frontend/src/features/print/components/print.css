@@ -154,3 +154,21 @@
 .print-btn-full {
   width: 100% !important;
 }
+
+.print-logs-section {
+  grid-column: 1 / -1;
+}
+
+.print-logs-box {
+  width: 100%;
+  min-height: 200px;
+  font-family: monospace;
+  font-size: 12px;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  resize: vertical;
+}

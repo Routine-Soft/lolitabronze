@@ -3,7 +3,7 @@ import { useState } from "react";
 import './print.css';
 
 export default function Print() {
-  const { loading, error, successMessage, runTestPrint, printOrderReceipt } = usePrint();
+const { loading, error, successMessage, logs, runTestPrint, printOrderReceipt } = usePrint();
 
   const [textoTeste, setTextoTeste] = useState('');
   const [orderId, setOrderId] = useState('');
@@ -84,6 +84,25 @@ return (
         </section>
 
       </div>
+      {logs.length > 0 && (
+      <section className="print-section print-logs-section">
+        <h3>Logs técnicos</h3>
+        <p className="print-label">Copie e envie esses logs para o suporte:</p>
+        <textarea
+          className="print-logs-box"
+          readOnly
+          value={JSON.stringify(logs, null, 2)}
+          onFocus={(e) => e.target.select()}
+        />
+        <button
+          type="button"
+          className="print-btn-primary"
+          onClick={() => navigator.clipboard.writeText(JSON.stringify(logs, null, 2))}
+        >
+          Copiar logs
+        </button>
+      </section>
+    )}
     </div>
   );
 }
