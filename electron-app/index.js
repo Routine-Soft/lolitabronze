@@ -40,13 +40,9 @@ function startBackend() {
 
 function waitForBackend(callback, tentativas = 30) {
   const req = http.get(`http://localhost:${BACKEND_PORT}/api/users`, (res) => {
-    if (res.statusCode === 200 || res.statusCode === 304) {
-      // Backend pronto e respondendo com sucesso
-      callback();
-    } else {
-      // Backend respondeu mas ainda está inicializando banco/rotas
-      retry(callback, tentativas);
-    }
+    // Qualquer resposta HTTP (mesmo 401 sem token) já indica que o servidor está de pé
+    res.resume();
+    callback();
   });
 
   req.on('error', () => {

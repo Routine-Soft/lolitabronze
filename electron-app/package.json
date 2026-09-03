@@ -36,11 +36,7 @@
       {
         "from": "../frontend/dist",
         "to": "frontend/dist"
-      },
-      {
-      "from": "modules/print/rawPrint.ps1",
-      "to": "modules/print/rawPrint.ps1"
-     }
+      }
     ],
     "win": {
       "target": "nsis",
