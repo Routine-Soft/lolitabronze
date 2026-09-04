@@ -1,6 +1,6 @@
+import dotenv from "dotenv"
 import Fastify from "fastify";
 import fastifyCors from '@fastify/cors'
-import dotenv from "dotenv"
 import db from './src/db/db.js'
 import { userRoutes } from "./src/modules/user/user.routes.js";
 import { cashRoutes } from "./src/modules/cash/cash.routes.js";
@@ -10,9 +10,8 @@ import { produtoRoutes } from "./src/modules/produto/produto.routes.js";
 import { orderRoutes } from "./src/modules/order/order.routes.js";
 import { printRoutes } from "./src/modules/print/print.routes.js";
 import dns from 'node:dns';
-dns.setServers(['8.8.8.8', '1.1.1.1']);
 
-dotenv.config();
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 const fastify = Fastify({ logger: true })
 
 await fastify.register(fastifyCors, {            // 👈
