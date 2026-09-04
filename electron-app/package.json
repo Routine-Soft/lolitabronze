@@ -18,31 +18,41 @@
   "build": {
     "appId": "com.lolitabronze.app",
     "productName": "Lolita Bronze App",
+
     "icon": "build/icon.ico",
+
     "directories": {
       "output": "dist-installer"
     },
+
     "files": [
       "index.js",
       "preload.js",
       "build/**/*"
     ],
+
     "extraResources": [
       {
         "from": "../backend",
         "to": "backend",
-        "filter": ["**/*", "!node_modules/.cache", "!.git"]
+        "filter": [
+          "**/*",
+          "!node_modules/.cache",
+          "!.git"
+        ]
       },
       {
         "from": "../frontend/dist",
         "to": "frontend/dist"
       }
     ],
+
+
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
-      "signAndEditExecutable": false
+      "icon": "build/icon.ico"
     },
+    
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
