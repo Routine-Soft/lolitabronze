@@ -1,5 +1,6 @@
-import dotenv from "dotenv"
-dotenv.config()
+// Precisa ser o primeiro import: módulos abaixo (ex.: print.service.js) lêem
+// process.env em constantes de topo, então o .env deve estar carregado antes deles.
+import "dotenv/config";
 import Fastify from "fastify";
 import fastifyCors from '@fastify/cors'
 import db from './src/db/db.js'
