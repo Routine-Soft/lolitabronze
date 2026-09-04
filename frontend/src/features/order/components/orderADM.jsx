@@ -6,6 +6,19 @@ import { useServicos } from "../../servico/servico.hooks";
 import EntityPicker from "../../shared/components/EntityPicker";
 import "./orderADM.css";
 
+const LABEL_PAGAMENTO = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', nao_informado: 'Não informado' };
+
+function formatarDataHora(data) {
+  return data ? new Date(data).toLocaleString('pt-BR') : '—';
+}
+
+function formatarFormasPagamento(formasPagamento) {
+  if (!formasPagamento || formasPagamento.length === 0) return null;
+  return formasPagamento
+    .map((f) => `${LABEL_PAGAMENTO[f.typePayment] ?? f.typePayment}: R$ ${f.valor}`)
+    .join(' + ');
+}
+
 export default function OrderADM() {
   const {
     orders,
@@ -177,6 +190,10 @@ export default function OrderADM() {
             <p className="orders-list-item-sub">
               {o.itens.length} item(ns) — Total: R$ {o.total} —{' '}
               {o.itens.map((i) => (i.tipo === 'PRODUTO' ? i.produtoId?.name : i.servicoId?.name)).filter(Boolean).join(', ')}
+            </p>
+            <p className="orders-list-item-sub">
+              Aberta em: {formatarDataHora(o.createdAt)} — Atualizada em: {formatarDataHora(o.updatedAt)}
+              {formatarFormasPagamento(o.formasPagamento) && <> — Pago via: {formatarFormasPagamento(o.formasPagamento)}</>}
             </p>
           </div>
         ))}
@@ -419,6 +436,14 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
       <div className="details-box">
         <p><strong>Status:</strong> {order.status}</p>
         <p><strong>Cliente:</strong> {order.customerId?.name} — {order.customerId?.phone}</p>
+        <p><strong>Aberta em:</strong> {formatarDataHora(order.createdAt)}</p>
+        <p><strong>Atualizada em:</strong> {formatarDataHora(order.updatedAt)}</p>
+        {order.status === 'FECHADA' && (
+          <p><strong>Fechada em:</strong> {formatarDataHora(order.dataFechamento)}</p>
+        )}
+        {formatarFormasPagamento(order.formasPagamento) && (
+          <p><strong>Pago via:</strong> {formatarFormasPagamento(order.formasPagamento)}</p>
+        )}
       </div>
 
       {order.status === 'ABERTA' && (

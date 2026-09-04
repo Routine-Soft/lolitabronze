@@ -134,6 +134,30 @@ export async function registrarSaidaNoCaixa({ orderId, categoria, valor, descric
   });
 }
 
+// soma as movimentações de caixa de cada comanda por forma de pagamento (fonte de verdade p/ pagamentos divididos)
+export async function getFormasPagamentoPorOrders(orderIds) {
+  if (!orderIds || orderIds.length === 0) return {};
+
+  const resultado = await CashMovementModel.aggregate([
+    { $match: { orderId: { $in: orderIds }, typePayment: { $ne: null } } },
+    {
+      $group: {
+        _id: { orderId: '$orderId', typePayment: '$typePayment' },
+        valor: { $sum: { $cond: [{ $eq: ['$tipo', 'ENTRADA'] }, '$valor', { $multiply: ['$valor', -1] }] } },
+      },
+    },
+  ]);
+
+  const mapa = {};
+  for (const linha of resultado) {
+    if (linha.valor <= 0) continue;
+    const orderId = linha._id.orderId.toString();
+    if (!mapa[orderId]) mapa[orderId] = [];
+    mapa[orderId].push({ typePayment: linha._id.typePayment, valor: linha.valor });
+  }
+  return mapa;
+}
+
 export async function listMovements(filtros = {}) {
   return CashMovementModel.find(filtros)
     .populate('userId')
