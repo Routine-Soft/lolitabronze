@@ -54,8 +54,8 @@ export const UserService = {
         if (!valid) {
             throw new AppError('Email ou senha incorretos', 401)
         }
-        const accessToken = jwt.sign({ id: user._id}, process.env.JWT_SECRET, { expiresIn: '24h' })
-        const refreshToken = jwt.sign({ id: user._id}, process.env.JWT_SECRET, { expiresIn: '7d' })
+        const accessToken = jwt.sign({ id: user._id}, process.env.JWT_SECRET, { expiresIn: '30d' })
+        const refreshToken = jwt.sign({ id: user._id}, process.env.JWT_SECRET, { expiresIn: '30d' })
         user.tokenRefresh = refreshToken
         await user.save()
         return { accessToken, refreshToken, user: user.toJSON()}
@@ -92,7 +92,7 @@ export const UserService = {
             const newAccessToken = jwt.sign(
                 { id: user._id },
                 process.env.JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '30d' }
             )
 
             return { accessToken: newAccessToken }
