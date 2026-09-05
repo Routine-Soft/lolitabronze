@@ -34,6 +34,18 @@ class TokenManager {
 
 const tokenManager = new TokenManager()
 
+// tenta de novo em erro de rede (ex.: "Failed to fetch" com o backend ainda subindo) antes de desistir
+async function fetchComRetry(url, options, tentativas = 5, atrasoMs = 600) {
+  for (let tentativa = 1; tentativa <= tentativas; tentativa++) {
+    try {
+      return await fetch(url, options)
+    } catch (error) {
+      if (tentativa === tentativas) throw error
+      await new Promise((resolve) => setTimeout(resolve, atrasoMs))
+    }
+  }
+}
+
 // Interceptor para adicionar token nos headers
 async function makeRequest(url, options = {}) {
   const headers = {
@@ -52,7 +64,7 @@ async function makeRequest(url, options = {}) {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}${url}`, {
+    const response = await fetchComRetry(`${API_BASE_URL}${url}`, {
       ...options,
       headers,
     })

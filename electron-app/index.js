@@ -5,9 +5,14 @@ const http = require('http');
 
 let backendProcess = null;
 let mainWindow = null;
+let splashWindow = null;
 
 const isDev = !app.isPackaged;
 const BACKEND_PORT = 8080;
+
+const RETRY_INTERVAL_MS = 500;
+const SLOW_APOS_TENTATIVAS = 30; // ~15s — avisa que está demorando, mas continua tentando
+const ERRO_APOS_TENTATIVAS = 120; // ~60s — avisa que algo está errado, mas continua tentando
 
 function getBackendPath() {
   return isDev
@@ -38,27 +43,45 @@ function startBackend() {
   });
 }
 
-function waitForBackend(callback, tentativas = 30) {
+function createSplashWindow() {
+  splashWindow = new BrowserWindow({
+    width: 380,
+    height: 260,
+    frame: false,
+    resizable: false,
+    icon: path.join(__dirname, 'build/icon.ico'),
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
+  });
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+}
+
+function updateSplashStatus(status) {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.loadFile(path.join(__dirname, 'splash.html'), { search: `status=${status}` });
+  }
+}
+
+function checkBackend(callback) {
   const req = http.get(`http://localhost:${BACKEND_PORT}/api/users`, (res) => {
     // Qualquer resposta HTTP (mesmo 401 sem token) já indica que o servidor está de pé
     res.resume();
-    callback();
+    callback(true);
   });
-
-  req.on('error', () => {
-    retry(callback, tentativas);
-  });
-
+  req.on('error', () => callback(false));
   req.end();
 }
 
-function retry(callback, tentativas) {
-  if (tentativas <= 0) {
-    console.error('Backend não respondeu a tempo. Abrindo janela assim mesmo...');
-    callback();
-    return;
-  }
-  setTimeout(() => waitForBackend(callback, tentativas - 1), 500);
+function waitForBackend(callback, tentativas = 0) {
+  checkBackend((ok) => {
+    if (ok) {
+      callback();
+      return;
+    }
+    const proxima = tentativas + 1;
+    if (proxima === SLOW_APOS_TENTATIVAS) updateSplashStatus('slow');
+    if (proxima === ERRO_APOS_TENTATIVAS) updateSplashStatus('error');
+    setTimeout(() => waitForBackend(callback, proxima), RETRY_INTERVAL_MS);
+  });
 }
 
 function getFrontendPath() {
@@ -75,6 +98,7 @@ function createWindow() {
     height: 800,
     title: 'Lolita Bronze',
     icon: iconPath,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -83,9 +107,15 @@ function createWindow() {
   });
 
   mainWindow.loadFile(getFrontendPath());
+
+  mainWindow.once('ready-to-show', () => {
+    if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
+    mainWindow.show();
+  });
 }
 
 app.whenReady().then(() => {
+  createSplashWindow();
   startBackend();
   waitForBackend(() => {
     createWindow();
