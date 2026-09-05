@@ -1,5 +1,5 @@
 // fallback quando não há CashMovement (ex.: pagamento feito sem caixa aberto) — usa o que ficou gravado no próprio item
-function formasPagamentoDosItens(itens) {
+ export function formasPagamentoDosItens(itens) {
   const somaPorForma = {};
   for (const i of itens) {
     if (i.valorPago > 0) {

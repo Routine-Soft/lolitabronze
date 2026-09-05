@@ -1,11 +1,15 @@
 import { ThermalPrinter, PrinterTypes } from 'node-thermal-printer';
 import os from 'os';
 import { getOrderById } from '../order/order.service.js';
+import { formasPagamentoDosItens } from '../order/order.dto.js';
+import * as cashService from '../cash/cash.service.js';
 import { resolveWindowsPrinterName, sendRawBufferToWindowsPrinter } from './windowsPrinter.js';
+import { getLogoEscPosBuffer } from './logo.js';
 
 const PRINTER_MODE = (process.env.PRINTER_MODE || 'usb').toLowerCase(); // 'usb' | 'windows'
 const PRINTER_INTERFACE = process.env.PRINTER_INTERFACE || 'usb';
 const WINDOWS_PRINTER_NAME = process.env.PRINTER_NAME || null;
+const LABEL_PAGAMENTO = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', nao_informado: 'Não informado' };
 
 function createPrinter() {
   return new ThermalPrinter({
@@ -99,6 +103,17 @@ async function sendToPrinter(printer, logs, windowsPrinterName) {
   await printer.execute();
 }
 
+// insere o logo no buffer; se falhar (ex.: falta de dependência nativa), segue sem ele
+async function printLogo(printer, logs) {
+  try {
+    const logoBuffer = await getLogoEscPosBuffer();
+    printer.add(logoBuffer);
+    printer.newLine();
+  } catch (err) {
+    logStep(logs, 'Não foi possível montar o logo, seguindo sem ele', { erro: err.message });
+  }
+}
+
 export async function testPrinter(texto) {
   const logs = [];
   const printer = createPrinter();
@@ -109,6 +124,7 @@ export async function testPrinter(texto) {
     logStep(logs, 'Montando conteúdo do teste de impressão');
     printer.clear();
     printer.alignCenter();
+    await printLogo(printer, logs);
     printer.bold(true);
     printer.println('TESTE DE IMPRESSÃO');
     printer.bold(false);
@@ -152,50 +168,75 @@ export async function printOrder(orderId) {
     logStep(logs, 'Montando recibo do pedido');
     printer.clear();
     printer.alignCenter();
+    await printLogo(printer, logs);
     printer.bold(true);
     printer.println('LOLITA BRONZE');
     printer.bold(false);
     printer.println('--------------------------------');
 
     printer.alignLeft();
+    printer.println(`COMANDA ${order.status}`);
     printer.println(`Cliente: ${order.customerId?.name ?? '-'}`);
-    printer.println(`Data: ${order.createdAt.toLocaleDateString('pt-BR')}  Hora: ${order.createdAt.toLocaleTimeString('pt-BR')}`);
+    printer.println(`Telefone: ${order.customerId?.phone ?? '-'}`);
+    printer.println(`Aberta em: ${order.createdAt.toLocaleDateString('pt-BR')}  Hora: ${order.createdAt.toLocaleTimeString('pt-BR')}`);
+    if (order.status === 'FECHADA') printer.println(`Fechada em: ${order.dataFechamento.toLocaleDateString('pt-BR')}  Hora: ${order.dataFechamento.toLocaleTimeString('pt-BR')}`);
+    printer.println('--------------------------------');
     printer.println(`Atendido por: ${order.userId?.name ?? '-'}`);
     printer.println('--------------------------------');
 
-    if (order.tipo === 'PRODUTO') {
-      order.produtos.forEach((linha) => {
-        const nome = linha.produtoId?.name ?? 'Produto';
-        const subtotal = (linha.precoUnitario * linha.quantidade).toFixed(2);
-        printer.println(`${linha.quantidade}x ${nome}`);
-        printer.alignRight();
-        printer.println(`R$ ${subtotal}`);
-        printer.alignLeft();
-      });
-    } else {
-      const nome = order.servicoId?.name ?? 'Serviço';
-      printer.println(`1x ${nome}`);
-      printer.alignRight();
-      printer.println(`R$ ${order.total.toFixed(2)}`);
-      printer.alignLeft();
+    const total = order.itens.reduce(
+      (s, i) => s + (i.tipo === 'PRODUTO' ? i.precoUnitario * i.quantidade : i.precoUnitario),
+      0
+    );
+    const totalPago = order.itens.reduce((s, i) => s + i.valorPago, 0);
+    const totalPendente = total - totalPago;
 
-      if (order.numeroAtendimento) printer.println(`Atendimento nº ${order.numeroAtendimento}`);
-      if (order.agenda) printer.println(`Agendado para: ${new Date(order.agenda).toLocaleString('pt-BR')}`);
-    }
+    const formasPorOrder = await cashService.getFormasPagamentoPorOrders([order._id]);
+    const formasPagamento = formasPorOrder[order._id.toString()]?.length > 0
+      ? formasPorOrder[order._id.toString()]
+      : formasPagamentoDosItens(order.itens);
 
-    printer.println('--------------------------------');
-    printer.alignRight();
-    printer.bold(true);
-    printer.println(`TOTAL: R$ ${order.total.toFixed(2)}`);
-    printer.bold(false);
-    printer.alignLeft();
+    order.itens.forEach((item) => {
+      if (item.tipo === 'PRODUTO') {
+        const nome = item.produtoId?.name ?? 'Produto';
+        const subtotal = (item.precoUnitario * item.quantidade).toFixed(2);
+        printer.println(`${nome} ${item.quantidade} un x ${item.precoUnitario.toFixed(2)} total ${subtotal}`);
+      } else {
+        const nome = item.servicoId?.name ?? 'Serviço';
+        printer.println(`${nome} total ${item.precoUnitario.toFixed(2)}`);
+
+        printer.bold(true);
+        if (item.numeroAtendimento) printer.println(`Serviço nº #${item.numeroAtendimento}`);
+        if (item.agenda) printer.println(`Agendado para: ${new Date(item.agenda).toLocaleString('pt-BR')}`);
+        printer.bold(false);;
+      }
+
+    });
 
     if (order.observacao) printer.println(`Obs: ${order.observacao}`);
 
-    if (order.tipo === 'SERVICO') {
-      const valorRestante = order.total - order.valorPago;
-      printer.println(`Pago: R$ ${order.valorPago.toFixed(2)}`);
-      if (valorRestante > 0) printer.println(`Restante: R$ ${valorRestante.toFixed(2)}`);
+    printer.println('--------------------------------');
+
+    printer.alignRight();
+    printer.bold(true);
+    printer.println(`
+    VALOR TOTAL: R$ ${total.toFixed(2)}`);
+    printer.bold(false);
+    printer.alignLeft();
+
+    printer.alignRight();
+    printer.bold(true);
+    printer.println(`VALOR PAGO: R$ ${totalPago.toFixed(2)}`);
+    printer.bold(false);
+    printer.alignLeft();
+    if (totalPendente > 0) printer.println(`Restante: R$ ${totalPendente.toFixed(2)}`);
+
+    if (formasPagamento.length > 0) {
+      const formasTexto = formasPagamento
+        .map((f) => `${LABEL_PAGAMENTO[f.typePayment] ?? f.typePayment}: R$ ${f.valor.toFixed(2)}`)
+        .join(' + ');
+      printer.println(`Forma de pagamento:`)
+      printer.println(`${formasTexto}`);
     }
 
     printer.cut();

@@ -3,6 +3,7 @@ import { useOrders, useOrder } from "../order.hooks";
 import { useCustomers } from "../../customer/customer.hooks";
 import { useProdutos } from "../../produto/produto.hooks";
 import { useServicos } from "../../servico/servico.hooks";
+import { usePrint } from "../../print/print.hooks";
 import EntityPicker from "../../shared/components/EntityPicker";
 import "./orderADM.css";
 
@@ -272,6 +273,13 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
     checkSlotAvailability,
   } = useOrder(orderId);
 
+  const {
+    loading: imprimindo,
+    error: erroImpressao,
+    successMessage: sucessoImpressao,
+    printOrderReceipt,
+  } = usePrint();
+
   const produtosPicker = useProdutos(1000);
   const servicosPicker = useServicos(1000);
 
@@ -432,12 +440,13 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
       </div>
 
       {successMessage && <p className="orderadm-alert-success">{successMessage}</p>}
+      {sucessoImpressao && <p className="orderadm-alert-success">{sucessoImpressao}</p>}
+      {erroImpressao && <p className="orderadm-alert-error">Erro ao imprimir: {erroImpressao.message}</p>}
 
       <div className="details-box">
         <p><strong>Status:</strong> {order.status}</p>
         <p><strong>Cliente:</strong> {order.customerId?.name} — {order.customerId?.phone}</p>
         <p><strong>Aberta em:</strong> {formatarDataHora(order.createdAt)}</p>
-        <p><strong>Atualizada em:</strong> {formatarDataHora(order.updatedAt)}</p>
         {order.status === 'FECHADA' && (
           <p><strong>Fechada em:</strong> {formatarDataHora(order.dataFechamento)}</p>
         )}
@@ -728,6 +737,14 @@ function OrderDetalhe({ orderId, onVoltar, onExcluida }) {
             </button>
           </>
         )}
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={imprimindo}
+          onClick={() => printOrderReceipt(order.id)}
+        >
+          {imprimindo ? 'Imprimindo...' : '🖨️ Imprimir comanda'}
+        </button>
         <button
           type="button"
           className="btn-danger"
