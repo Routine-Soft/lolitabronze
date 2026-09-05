@@ -239,6 +239,12 @@ export async function printOrder(orderId) {
       printer.println(`${formasTexto}`);
     }
 
+    printer.newLine();
+    printer.newLine();
+    // impressora térmica não suporta emojis (fora da tabela ESC/POS), usando "*" no lugar
+    printer.println(`Bronze em dia, autoestima em cima!`)
+    printer.println(`Obrigado por escolher a Lolita Bronze!`);
+
     printer.cut();
 
     logStep(logs, 'Enviando comando de impressão');
