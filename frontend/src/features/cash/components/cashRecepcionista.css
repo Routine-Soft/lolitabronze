@@ -212,6 +212,26 @@
   box-shadow: 0 3px 10px rgba(239, 68, 68, 0.15);
 }
 
+.cash-summary-saldo {
+  background: rgba(223, 175, 43, 0.1);
+  border: 1px solid rgba(223, 175, 43, 0.3);
+  margin-bottom: 0.5rem;
+}
+
+.cash-summary-saldo span {
+  color: #A9A3AE;
+}
+
+.cash-summary-saldo strong {
+  color: #DFAF2B;
+  font-size: 1.1rem;
+}
+
+.cash-summary-saldo:hover {
+  border-color: rgba(223, 175, 43, 0.5);
+  box-shadow: 0 3px 10px rgba(223, 175, 43, 0.2);
+}
+
 /* Formulários */
 .cash-form {
   display: flex;

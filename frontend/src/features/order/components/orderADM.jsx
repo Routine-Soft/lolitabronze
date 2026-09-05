@@ -1,9 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useOrders, useOrder } from "../order.hooks";
 import { useCustomers } from "../../customer/customer.hooks";
 import { useProdutos } from "../../produto/produto.hooks";
 import { useServicos } from "../../servico/servico.hooks";
 import { usePrint } from "../../print/print.hooks";
+import { getCurrentSession } from "../../cash/cash.api";
+import { onDashboardRefresh } from "../../shared/events/dashboardEvents";
 import EntityPicker from "../../shared/components/EntityPicker";
 import "./orderADM.css";
 
@@ -43,6 +45,19 @@ export default function OrderADM() {
   const [diaInput, setDiaInput] = useState(filtros.dia ?? '');
   const [prevFiltrosDia, setPrevFiltrosDia] = useState(filtros.dia ?? '');
   const diaDebounceRef = useRef(null);
+
+  const [cashSessionOpen, setCashSessionOpen] = useState(true); // otimista até checar
+
+  useEffect(() => {
+    function checarCaixa() {
+      getCurrentSession()
+        .then(({ data }) => setCashSessionOpen(!!data))
+        .catch(() => setCashSessionOpen(false));
+    }
+
+    checarCaixa();
+    return onDashboardRefresh(checarCaixa);
+  }, []);
 
   const filtrosDiaNormalizado = filtros.dia ?? '';
   if (filtrosDiaNormalizado !== prevFiltrosDia) {
@@ -94,9 +109,20 @@ export default function OrderADM() {
     <div className="orderadm-card">
       <div className="orderadm-header">
         <h1>🧾 Comandas</h1>
-        <button type="button" className="btn-primary" onClick={() => setIsAbrirModalOpen(true)}>
-          + Abrir comanda
-        </button>
+        <div className="orderadm-header-action">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setIsAbrirModalOpen(true)}
+            disabled={!cashSessionOpen}
+            title={!cashSessionOpen ? 'Antes de abrir comanda, precisa abrir o caixa' : undefined}
+          >
+            + Abrir comanda
+          </button>
+          {!cashSessionOpen && (
+            <p className="orderadm-header-hint">Antes de abrir comanda, precisa abrir o caixa</p>
+          )}
+        </div>
       </div>
 
       {successMessage && <p className="orderadm-alert-success">{successMessage}</p>}

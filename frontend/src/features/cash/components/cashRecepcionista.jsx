@@ -121,17 +121,30 @@ return (
               </div>
 
               {currentSession.resumo && (
-                <div className="cash-summary">
-                  <div className="cash-summary-item cash-summary-entry">
-                    <span>Entradas</span>
-                    <strong>R$ {currentSession.resumo.totalEntradas}</strong>
+                <>
+                  <div className="cash-summary-item cash-summary-saldo">
+                    <span>Saldo em caixa</span>
+                    <strong>
+                      R$ {(
+                        currentSession.valorAbertura +
+                        currentSession.resumo.totalEntradas -
+                        currentSession.resumo.totalSaidas
+                      ).toFixed(2)}
+                    </strong>
                   </div>
 
-                  <div className="cash-summary-item cash-summary-exit">
-                    <span>Saídas</span>
-                    <strong>R$ {currentSession.resumo.totalSaidas}</strong>
+                  <div className="cash-summary">
+                    <div className="cash-summary-item cash-summary-entry">
+                      <span>Entradas</span>
+                      <strong>R$ {currentSession.resumo.totalEntradas}</strong>
+                    </div>
+
+                    <div className="cash-summary-item cash-summary-exit">
+                      <span>Saídas</span>
+                      <strong>R$ {currentSession.resumo.totalSaidas}</strong>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               <form onSubmit={handleCloseSession} className="cash-form-row">
